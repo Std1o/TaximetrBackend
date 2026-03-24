@@ -11,10 +11,9 @@ router = APIRouter(tags=["websocket"])
 
 # Вебсокет для отслеживания конкретного заказа (водитель и клиент)
 @router.websocket("/ws/order/{order_id}")
-async def websocket_order(websocket: WebSocket, order_id: int):
+async def websocket_order(websocket: WebSocket, order_id: int, order_service: OrderService = Depends(),
+                          driver_service: DriverService = Depends()):
     await websocket.accept()
-    order_service = OrderService()
-    driver_service = DriverService()
 
     try:
         # Ждем идентификацию
