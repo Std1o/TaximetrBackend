@@ -101,7 +101,7 @@ async def reject_order(
         }))
 
         # Перераспределяем заказ
-        asyncio.create_task(distributor.redistribute_order(order, data.driver_id))
+        asyncio.create_task(distributor.redistribute_order(order, order_service, data.driver_id))
 
         return {"message": "Order rejected", "order_id": order_id}
     except ValueError as e:

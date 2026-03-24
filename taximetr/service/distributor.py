@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from taximetr.model.enums import DistributionAlgorithm
 from taximetr.service.driver_service import DriverService
+from taximetr.service.order_service import OrderService
 from taximetr.service.settings_service import SettingsService
 from taximetr.service.websocket_manager import manager
 from taximetr.tables import Driver, Order
@@ -65,24 +66,25 @@ class OrderDistributor:
             )
         )
 
-    async def redistribute_order(self, order: Order, rejected_driver_id: int):
+    async def redistribute_order(self, order: Order, order_service: OrderService, rejected_driver_id: int):
         # Добавляем водителя в список отказавшихся
         if order.id not in self.rejected_orders:
             self.rejected_orders[order.id] = []
         self.rejected_orders[order.id].append(rejected_driver_id)
 
-        driver_service = DriverService()
-        settings_service = SettingsService()
+        driver_service = DriverService(order_service.db)
+        settings_service = SettingsService(order_service.db)
 
         online_drivers = driver_service.get_online_drivers()
         rejected_drivers = self.rejected_orders.get(order.id, [])
 
         if not online_drivers:
-            await manager.broadcast_to_drivers({
-                "type": "order_cancelled",
-                "order_id": order.id,
-                "message": "Нет свободных водителей"
-            })
+            await self.cancel_order(order, order_service, "Нет свободных водителей")
+            return
+
+        available_drivers = [d for d in online_drivers if d.id not in rejected_drivers]
+        if not available_drivers:
+            await self.cancel_order(order, order_service, "Все водители отказались от заказа")
             return
 
         algorithm = settings_service.get_algorithm()
@@ -112,11 +114,7 @@ class OrderDistributor:
                 "previous_driver_rejected": True
             })
         else:
-            await manager.broadcast_to_drivers({
-                "type": "order_cancelled",
-                "order_id": order.id,
-                "message": "Все водители отказались от заказа"
-            })
+            await self.cancel_order(order, order_service, "Не удалось найти водителя")
 
     async def distribute_order(self, order: Order, db: Session):
         driver_service = DriverService(db)
@@ -169,6 +167,21 @@ class OrderDistributor:
                         "order_id": order.id,
                         "taken_by": driver.name
                     })
+
+    async def cancel_order(self, order: Order,
+                           order_service: OrderService,
+                           reason: str = "Все водители отказались от заказа"):
+        """Отмена заказа"""
+        order_service.cancel_order(order.id)
+
+        await manager.send_to_order(order.id, {
+            "type": "order_cancelled",
+            "order_id": order.id,
+            "reason": reason
+        })
+
+        if order.id in self.rejected_orders:
+            del self.rejected_orders[order.id]
 
 
 distributor = OrderDistributor()

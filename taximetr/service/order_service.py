@@ -84,3 +84,12 @@ class OrderService:
             self.db.commit()
             self.db.refresh(order)
         return order
+
+    def cancel_order(self, order_id: int) -> Optional[Order]:
+        """Отмена заказа"""
+        order = self.get_order(order_id)
+        if order and order.status == OrderStatus.PENDING.value:
+            order.status = OrderStatus.CANCELLED.value
+            self.db.commit()
+            self.db.refresh(order)
+        return order
