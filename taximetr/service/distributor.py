@@ -1,0 +1,174 @@
+import math
+from typing import List, Optional
+from sqlalchemy.orm import Session
+
+from taximetr.model.enums import DistributionAlgorithm
+from taximetr.service.driver_service import DriverService
+from taximetr.service.settings_service import SettingsService
+from taximetr.service.websocket_manager import manager
+from taximetr.tables import Driver, Order
+import asyncio
+
+
+class OrderDistributor:
+    def __init__(self):
+        self.round_robin_index = {}
+        self.rejected_orders = {}
+
+    def calculate_distance(self, lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+        return math.sqrt((lat1 - lat2) ** 2 + (lng1 - lng2) ** 2)
+
+    def get_next_driver_round_robin(self, online_drivers: List[Driver],
+                                    rejected_drivers: List[int] = None) -> Optional[Driver]:
+        if not online_drivers:
+            return None
+
+        # Фильтруем водителей, которые уже отказались
+        if rejected_drivers:
+            available_drivers = [d for d in online_drivers if d.id not in rejected_drivers]
+            if not available_drivers:
+                return None
+        else:
+            available_drivers = online_drivers
+
+        # available_drivers уже отсортированы по id из сервиса
+        driver_ids = [d.id for d in available_drivers]
+        key = tuple(driver_ids)
+
+        if key not in self.round_robin_index:
+            self.round_robin_index[key] = 0
+
+        index = self.round_robin_index[key]
+        driver = available_drivers[index % len(available_drivers)]
+        self.round_robin_index[key] = (index + 1) % len(available_drivers)
+
+        return driver
+
+    def get_nearest_driver(self, order_lat: float, order_lng: float,
+                           online_drivers: List[Driver],
+                           rejected_drivers: List[int] = None) -> Optional[Driver]:
+        if not online_drivers:
+            return None
+
+        # Фильтруем водителей, которые уже отказались
+        if rejected_drivers:
+            available_drivers = [d for d in online_drivers if d.id not in rejected_drivers]
+            if not available_drivers:
+                return None
+        else:
+            available_drivers = online_drivers
+
+        return min(
+            available_drivers,
+            key=lambda d: self.calculate_distance(
+                order_lat, order_lng, d.current_lat, d.current_lng
+            )
+        )
+
+    async def redistribute_order(self, order: Order, rejected_driver_id: int):
+        # Добавляем водителя в список отказавшихся
+        if order.id not in self.rejected_orders:
+            self.rejected_orders[order.id] = []
+        self.rejected_orders[order.id].append(rejected_driver_id)
+
+        driver_service = DriverService()
+        settings_service = SettingsService()
+
+        online_drivers = driver_service.get_online_drivers()
+        rejected_drivers = self.rejected_orders.get(order.id, [])
+
+        if not online_drivers:
+            await manager.broadcast_to_drivers({
+                "type": "order_cancelled",
+                "order_id": order.id,
+                "message": "Нет свободных водителей"
+            })
+            return
+
+        algorithm = settings_service.get_algorithm()
+
+        if algorithm == DistributionAlgorithm.ROUND_ROBIN:
+            driver = self.get_next_driver_round_robin(online_drivers, rejected_drivers)
+        else:
+            driver = self.get_nearest_driver(
+                order.pickup_lat, order.pickup_lng, online_drivers, rejected_drivers
+            )
+
+        if driver:
+            await manager.send_to_driver(driver.id, {
+                "type": "new_order",
+                "order": {
+                    "id": order.id,
+                    "client_name": order.client_name,
+                    "client_phone": order.client_phone,
+                    "pickup_address": order.pickup_address,
+                    "delivery_address": order.delivery_address,
+                    "pickup_lat": order.pickup_lat,
+                    "pickup_lng": order.pickup_lng,
+                    "delivery_lat": order.delivery_lat,
+                    "delivery_lng": order.delivery_lng
+                },
+                "algorithm": algorithm.value,
+                "previous_driver_rejected": True
+            })
+        else:
+            await manager.broadcast_to_drivers({
+                "type": "order_cancelled",
+                "order_id": order.id,
+                "message": "Все водители отказались от заказа"
+            })
+
+    async def distribute_order(self, order: Order, db: Session):
+        driver_service = DriverService(db)
+        settings_service = SettingsService(db)
+
+        online_drivers = driver_service.get_online_drivers()
+
+        if not online_drivers:
+            await manager.broadcast_to_drivers({
+                "type": "new_order",
+                "order": {
+                    "id": order.id,
+                    "pickup_address": order.pickup_address,
+                    "delivery_address": order.delivery_address
+                },
+                "message": "Нет свободных водителей"
+            })
+            return
+
+        algorithm = settings_service.get_algorithm()
+
+        if algorithm == DistributionAlgorithm.ROUND_ROBIN:
+            driver = self.get_next_driver_round_robin(online_drivers)
+        else:
+            driver = self.get_nearest_driver(
+                order.pickup_lat, order.pickup_lng, online_drivers
+            )
+
+        if driver:
+            await manager.send_to_driver(driver.id, {
+                "type": "new_order",
+                "order": {
+                    "id": order.id,
+                    "client_name": order.client_name,
+                    "client_phone": order.client_phone,
+                    "pickup_address": order.pickup_address,
+                    "delivery_address": order.delivery_address,
+                    "pickup_lat": order.pickup_lat,
+                    "pickup_lng": order.pickup_lng,
+                    "delivery_lat": order.delivery_lat,
+                    "delivery_lng": order.delivery_lng
+                },
+                "algorithm": algorithm.value
+            })
+
+            for d in online_drivers:
+                if d.id != driver.id:
+                    await manager.send_to_driver(d.id, {
+                        "type": "order_taken",
+                        "order_id": order.id,
+                        "taken_by": driver.name
+                    })
+
+
+distributor = OrderDistributor()

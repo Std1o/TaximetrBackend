@@ -1,0 +1,29 @@
+from fastapi import APIRouter, Depends
+import asyncio
+
+from taximetr.model.schemas import SettingsResponse, SettingsUpdate
+from taximetr.service.settings_service import SettingsService
+from taximetr.service.websocket_manager import manager
+
+router = APIRouter(prefix="/settings", tags=["settings"])
+
+
+@router.get("/", response_model=SettingsResponse)
+def get_settings(service: SettingsService = Depends()):
+    settings = service.get_settings()
+    return SettingsResponse(algorithm=service.get_algorithm())
+
+
+@router.put("/", response_model=SettingsResponse)
+def update_settings(
+        settings_update: SettingsUpdate,
+        service: SettingsService = Depends()
+):
+    settings = service.update_algorithm(settings_update.algorithm)
+
+    asyncio.create_task(manager.broadcast_to_drivers({
+        "type": "algorithm_changed",
+        "algorithm": settings_update.algorithm.value
+    }))
+
+    return SettingsResponse(algorithm=settings_update.algorithm)
