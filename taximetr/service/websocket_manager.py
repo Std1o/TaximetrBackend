@@ -12,7 +12,6 @@ class ConnectionManager:
     # Методы для работы с заказами
     async def connect_to_order(self, websocket: WebSocket, order_id: int, role: str):
         """Подключение к заказу (водитель или клиент)"""
-        await websocket.accept()
 
         if order_id not in self.order_connections:
             self.order_connections[order_id] = {}
