@@ -16,14 +16,6 @@ def get_tariffs(service: TariffService = Depends()):
     return service.get_all_tariffs()
 
 
-@router.get("/active", response_model=TariffResponse)
-def get_active_tariff(service: TariffService = Depends()):
-    tariff = service.get_active_tariff()
-    if not tariff:
-        raise HTTPException(status_code=404, detail="No active tariff found")
-    return tariff
-
-
 @router.get("/{tariff_id}", response_model=TariffResponse)
 def get_tariff(tariff_id: int, service: TariffService = Depends()):
     tariff = service.get_tariff(tariff_id)
@@ -44,4 +36,4 @@ def update_tariff(tariff_id: int, tariff: TariffCreate, service: TariffService =
 def delete_tariff(tariff_id: int, service: TariffService = Depends()):
     if not service.delete_tariff(tariff_id):
         raise HTTPException(status_code=404, detail="Tariff not found")
-    return {"message": "Tariff deleted"}
+    return {"tariff_id": tariff_id}

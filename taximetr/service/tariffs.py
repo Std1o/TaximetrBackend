@@ -25,9 +25,6 @@ class TariffService:
     def get_tariff(self, tariff_id: int) -> Optional[Tariff]:
         return self.session.query(Tariff).filter(Tariff.id == tariff_id).first()
 
-    def get_active_tariff(self) -> Optional[Tariff]:
-        return self.session.query(Tariff).filter(Tariff.is_active == True).first()
-
     def update_tariff(self, tariff_id: int, tariff_data: TariffCreate) -> Optional[Tariff]:
         tariff = self.get_tariff(tariff_id)
         if tariff:
