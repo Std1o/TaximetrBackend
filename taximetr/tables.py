@@ -50,6 +50,25 @@ class Order(Base):
     accepted_at = sa.Column(sa.DateTime, nullable=True)
     completed_at = sa.Column(sa.DateTime, nullable=True)
 
+class Tariff(Base):
+    __tablename__ = "tariffs"
+
+    id = sa.Column(sa.Integer, primary_key=True, index=True)
+    name = sa.Column(sa.String, nullable=False)
+    min_cost = sa.Column(sa.Double, default=0.0)
+    min_km = sa.Column(sa.Double, default=0.0)
+    min_minutes = sa.Column(sa.Double, default=0.0)
+    price_per_km = sa.Column(sa.Double, default=0.0)
+    price_per_min = sa.Column(sa.Double, default=0.0)
+    waiting_price_per_min = sa.Column(sa.Double, default=5.0)
+    free_waiting_minutes = sa.Column(sa.Double, default=2.0)
+    min_speed_kmh = sa.Column(sa.Integer, default=0)
+    double_tariff_speed = sa.Column(sa.Integer, default=100)
+    country_price_per_km = sa.Column(sa.Double, default=5.0)
+    country_price_per_min = sa.Column(sa.Double, default=5.0)
+    is_active = sa.Column(sa.Boolean, default=True)
+    distance_and_time = sa.Column(sa.Boolean, default=True)
+
 
 class Settings(Base):
     __tablename__ = "settings"

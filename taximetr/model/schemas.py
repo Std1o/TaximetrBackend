@@ -70,3 +70,40 @@ class SettingsResponse(BaseModel):
 
 class AlgorithmUpdate(BaseModel):
     algorithm: DistributionAlgorithm
+
+class TariffCreate(BaseModel):
+    name: str
+    min_cost: float = 0.0
+    min_km: float = 0.0
+    min_minutes: float = 0.0
+    price_per_km: float = 0.0
+    price_per_min: float = 0.0
+    waiting_price_per_min: float = 5.0
+    free_waiting_minutes: float = 2.0
+    min_speed_kmh: int = 0
+    double_tariff_speed: int = 100
+    country_price_per_km: float = 5.0
+    country_price_per_min: float = 5.0
+    is_active: bool = True
+    distance_and_time: bool = True
+
+
+class TariffResponse(BaseModel):
+    id: int
+    name: str
+    min_cost: float
+    min_km: float
+    min_minutes: float
+    price_per_km: float
+    price_per_min: float
+    waiting_price_per_min: float
+    free_waiting_minutes: float
+    min_speed_kmh: int
+    double_tariff_speed: int
+    country_price_per_km: float
+    country_price_per_min: float
+    is_active: bool
+    distance_and_time: bool
+
+    class Config:
+        from_attributes = True
