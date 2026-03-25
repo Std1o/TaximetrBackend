@@ -64,8 +64,12 @@ class OrderComplete(BaseModel):
     driver_id: int
 
 
-class SettingsResponse(BaseModel):
+class AlgorithmResponse(BaseModel):
     algorithm: DistributionAlgorithm
+
+
+class FactorResponse(BaseModel):
+    factor: float
 
 
 class AlgorithmUpdate(BaseModel):

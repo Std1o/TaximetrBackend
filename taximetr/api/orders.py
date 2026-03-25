@@ -7,6 +7,7 @@ from taximetr.model.schemas import OrderCreate, OrderResponse, OrderAccept, Orde
 from taximetr.service.distributor import distributor
 from taximetr.service.driver_service import DriverService
 from taximetr.service.order_service import OrderService
+from taximetr.service.settings_service import SettingsService
 from taximetr.service.websocket_manager import manager
 
 router = APIRouter(prefix="/orders", tags=["orders"])
@@ -41,9 +42,11 @@ async def accept_order(
         order_id: int,
         data: OrderAccept,
         order_service: OrderService = Depends(),
-        driver_service: DriverService = Depends()
+        driver_service: DriverService = Depends(),
+        settings_service: SettingsService = Depends()
 ):
     order = order_service.get_order(order_id)
+    factor = settings_service.get_settings().factor
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
@@ -61,7 +64,7 @@ async def accept_order(
             "order_id": order_id,
             "driver_id": data.driver_id,
             "driver_name": driver.name
-        }))
+        }, factor=factor))
 
         # Уведомляем клиента через вебсокет заказа
         asyncio.create_task(manager.send_to_order(order_id, {

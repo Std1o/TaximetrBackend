@@ -121,6 +121,7 @@ class OrderDistributor:
         settings_service = SettingsService(db)
 
         online_drivers = driver_service.get_online_drivers()
+        factor = settings_service.get_settings().factor
 
         if not online_drivers:
             await manager.broadcast_to_drivers({
@@ -131,7 +132,7 @@ class OrderDistributor:
                     "delivery_address": order.delivery_address
                 },
                 "message": "Нет свободных водителей"
-            })
+            }, factor=factor)
             return
 
         algorithm = settings_service.get_algorithm()
@@ -158,7 +159,7 @@ class OrderDistributor:
                     "delivery_lng": order.delivery_lng
                 },
                 "algorithm": algorithm.value
-            })
+            }, factor=factor)
 
             for d in online_drivers:
                 if d.id != driver.id:
@@ -166,7 +167,7 @@ class OrderDistributor:
                         "type": "order_taken",
                         "order_id": order.id,
                         "taken_by": driver.name
-                    })
+                    }, factor=factor)
 
     async def cancel_order(self, order: Order,
                            order_service: OrderService,

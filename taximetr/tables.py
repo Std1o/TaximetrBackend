@@ -75,3 +75,4 @@ class Settings(Base):
 
     id = sa.Column(sa.Integer, primary_key=True, default=1)
     algorithm = sa.Column(sa.String, default=DistributionAlgorithm.ROUND_ROBIN.value)
+    factor = sa.Column(sa.Double, default=1.0)

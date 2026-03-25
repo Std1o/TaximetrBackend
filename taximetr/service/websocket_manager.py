@@ -59,20 +59,24 @@ class ConnectionManager:
         if driver_id in self.driver_connections:
             del self.driver_connections[driver_id]
 
-    async def broadcast_to_drivers(self, data: dict):
-        """Отправить сообщение всем онлайн водителям"""
-        for driver_id, websocket in self.driver_connections.items():
-            try:
-                await websocket.send_json(data)
-            except:
-                pass
-
-    # Метод для отправки конкретному водителю
-    async def send_to_driver(self, driver_id: int, data: dict):
+    async def send_to_driver(self, driver_id: int, data: dict, factor: float = None):
         """Отправить сообщение конкретному водителю"""
         if driver_id in self.driver_connections:
             try:
+                if factor is not None:
+                    data["factor"] = factor
                 await self.driver_connections[driver_id].send_json(data)
+            except:
+                pass
+
+    async def broadcast_to_drivers(self, data: dict, factor: float = None):
+        """Отправить сообщение всем онлайн водителям"""
+        for driver_id, websocket in self.driver_connections.items():
+            try:
+                msg = data.copy()
+                if factor is not None:
+                    msg["factor"] = factor
+                await websocket.send_json(msg)
             except:
                 pass
 

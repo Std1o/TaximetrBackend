@@ -26,6 +26,12 @@ class SettingsService:
         self.session.commit()
         self.session.refresh(settings)
 
+    def update_factor(self, factor: float):
+        settings = self.get_settings()
+        settings.factor = factor
+        self.session.commit()
+        self.session.refresh(settings)
+
     def get_algorithm(self) -> DistributionAlgorithm:
         settings = self.get_settings()
         return DistributionAlgorithm(settings.distribution_algorithm)
