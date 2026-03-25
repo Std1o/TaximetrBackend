@@ -20,12 +20,11 @@ class SettingsService:
             self.session.refresh(settings)
         return settings
 
-    def update_algorithm(self, algorithm: DistributionAlgorithm) -> Settings:
+    def update_algorithm(self, algorithm: DistributionAlgorithm):
         settings = self.get_settings()
         settings.distribution_algorithm = algorithm.value
         self.session.commit()
         self.session.refresh(settings)
-        return settings
 
     def get_algorithm(self) -> DistributionAlgorithm:
         settings = self.get_settings()

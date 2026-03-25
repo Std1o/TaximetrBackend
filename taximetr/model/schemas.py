@@ -68,5 +68,5 @@ class SettingsResponse(BaseModel):
     algorithm: DistributionAlgorithm
 
 
-class SettingsUpdate(BaseModel):
+class AlgorithmUpdate(BaseModel):
     algorithm: DistributionAlgorithm
