@@ -1,14 +1,6 @@
-import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from typing import Dict, List, Optional, Set
-import asyncio
-import json
-import uuid
-from datetime import datetime
 import logging
-from dataclasses import dataclass, asdict
-from enum import Enum
+
+import uvicorn
 
 from taximetr.settings import settings
 
