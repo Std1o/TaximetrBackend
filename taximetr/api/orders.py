@@ -67,7 +67,9 @@ async def accept_order(
             "type": "order_accepted",
             "driver_id": data.driver_id,
             "driver_name": driver.name,
-            "driver_phone": driver.phone
+            "driver_phone": driver.phone,
+            "lat": driver.current_lat,
+            "lng": driver.current_lng,
         }))
 
         return {"message": "Order accepted", "order_id": order_id}
