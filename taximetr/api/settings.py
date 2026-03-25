@@ -8,10 +8,10 @@ from taximetr.service.websocket_manager import manager
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 
-@router.get("/", response_model=SettingsResponse)
+@router.get("/")
 def get_settings(service: SettingsService = Depends()):
     settings = service.get_settings()
-    return SettingsResponse(algorithm=service.get_algorithm())
+    return settings
 
 
 @router.put("/algorithm", response_model=SettingsResponse)

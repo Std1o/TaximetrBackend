@@ -74,4 +74,4 @@ class Settings(Base):
     __tablename__ = "settings"
 
     id = sa.Column(sa.Integer, primary_key=True, default=1)
-    distribution_algorithm = sa.Column(sa.String, default=DistributionAlgorithm.ROUND_ROBIN.value)
+    algorithm = sa.Column(sa.String, default=DistributionAlgorithm.ROUND_ROBIN.value)
