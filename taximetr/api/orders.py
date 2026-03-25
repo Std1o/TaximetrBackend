@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 import asyncio
 
+from taximetr.model.enums import OrderStatus
 from taximetr.model.schemas import OrderCreate, OrderResponse, OrderAccept, OrderReject, OrderComplete
 from taximetr.service.distributor import distributor
 from taximetr.service.driver_service import DriverService
@@ -131,5 +132,47 @@ async def complete_order(
         }))
 
         return {"message": "Order completed", "order_id": order_id}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put("/{order_id}/cancel")
+async def cancel_order(
+        order_id: int,
+        order_service: OrderService = Depends(),
+        driver_service: DriverService = Depends()
+):
+    order = order_service.get_order(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    # Проверяем, что заказ еще не принят и не завершен
+    if order.status not in [OrderStatus.PENDING.value, OrderStatus.ACCEPTED.value]:
+        raise HTTPException(status_code=400, detail="Order cannot be cancelled")
+
+    try:
+        # Если заказ уже принят, освобождаем водителя
+        if order.status == OrderStatus.ACCEPTED.value and order.driver_id:
+            driver_service.set_online(order.driver_id)
+
+        # Отменяем заказ
+        order = order_service.cancel_order(order_id)
+
+        # Уведомляем всех участников через вебсокет
+        asyncio.create_task(manager.send_to_order(order_id, {
+            "type": "order_cancelled",
+            "order_id": order_id,
+            "reason": "Cancelled by client"
+        }))
+
+        # Уведомляем водителей (если заказ был в статусе PENDING)
+        if order.status == OrderStatus.CANCELLED.value:
+            asyncio.create_task(manager.broadcast_to_drivers({
+                "type": "order_cancelled",
+                "order_id": order_id,
+                "reason": "Cancelled by client"
+            }))
+
+        return {"message": "Order cancelled", "order_id": order_id}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
