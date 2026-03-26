@@ -119,7 +119,8 @@ async def complete_order(
         order_id: int,
         data: OrderComplete,
         order_service: OrderService = Depends(),
-        driver_service: DriverService = Depends()
+        driver_service: DriverService = Depends(),
+        settings_service: SettingsService = Depends()
 ):
     try:
         order = order_service.complete_order(order_id, data.driver_id)
@@ -128,11 +129,20 @@ async def complete_order(
 
         driver_service.set_online(data.driver_id)
 
+        factor = settings_service.get_settings(order.settings_id).factor
+
         # Уведомляем клиента
         asyncio.create_task(manager.send_to_order(order_id, {
             "type": "order_completed",
             "order_id": order_id
         }))
+
+        # Уведомляем водителя
+        asyncio.create_task(manager.send_to_driver(data.driver_id, {
+            "type": "order_completed",
+            "order_id": order_id,
+            "message": "Order completed successfully"
+        }, factor=factor))
 
         return {"message": "Order completed", "order_id": order_id}
     except ValueError as e:
