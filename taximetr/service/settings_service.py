@@ -11,27 +11,30 @@ class SettingsService:
     def __init__(self, session: Session = Depends(get_session)):
         self.session = session
 
-    def get_settings(self) -> Settings:
-        settings = self.session.query(Settings).first()
-        if not settings:
-            settings = Settings()
-            self.session.add(settings)
-            self.session.commit()
-            self.session.refresh(settings)
+    def add_settings(self, region: str):
+        settings = Settings()
+        settings.region = region
+        self.session.add(settings)
+        self.session.commit()
+        self.session.refresh(settings)
         return settings
 
-    def update_algorithm(self, algorithm: DistributionAlgorithm):
-        settings = self.get_settings()
+    def get_settings(self, settings_id: int) -> Settings:
+        settings = self.session.query(Settings).filter_by(id=settings_id).first()
+        return settings
+
+    def update_algorithm(self, settings_id: int, algorithm: DistributionAlgorithm):
+        settings = self.get_settings(settings_id)
         settings.distribution_algorithm = algorithm.value
         self.session.commit()
         self.session.refresh(settings)
 
-    def update_factor(self, factor: float):
-        settings = self.get_settings()
+    def update_factor(self, settings_id: int, factor: float):
+        settings = self.get_settings(settings_id)
         settings.factor = factor
         self.session.commit()
         self.session.refresh(settings)
 
-    def get_algorithm(self) -> DistributionAlgorithm:
-        settings = self.get_settings()
-        return DistributionAlgorithm(settings.distribution_algorithm)
+    def get_algorithm(self, settings_id: int) -> DistributionAlgorithm:
+        settings = self.get_settings(settings_id)
+        return DistributionAlgorithm(settings.algorithm)

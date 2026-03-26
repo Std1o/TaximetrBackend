@@ -63,7 +63,8 @@ class DriverService:
             self.session.refresh(driver)
         return driver
 
-    def get_online_drivers(self) -> List[Driver]:
+    def get_online_drivers(self, settings_id: int) -> List[Driver]:
         return self.session.query(Driver).filter(
-            Driver.status == DriverStatus.ONLINE.value
-        ).order_by(Driver.id).all()  # ← сортировка по id
+            Driver.status == DriverStatus.ONLINE.value,
+            Driver.settings_id == settings_id
+        ).order_by(Driver.id).all()

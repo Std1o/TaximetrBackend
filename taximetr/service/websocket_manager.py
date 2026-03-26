@@ -49,10 +49,12 @@ class ConnectionManager:
                 pass
 
     # Методы для работы с водителями (broadcast)
-    async def connect_driver(self, websocket: WebSocket, driver_id: int):
-        """Подключение водителя для broadcast"""
+    async def connect_driver(self, websocket: WebSocket, driver_id: int, settings_id: int):
         await websocket.accept()
-        self.driver_connections[driver_id] = websocket
+        self.driver_connections[driver_id] = {
+            "websocket": websocket,
+            "settings_id": settings_id
+        }
 
     def disconnect_driver(self, driver_id: int):
         """Отключение водителя от broadcast"""
@@ -65,20 +67,20 @@ class ConnectionManager:
             try:
                 if factor is not None:
                     data["factor"] = factor
-                await self.driver_connections[driver_id].send_json(data)
+                await self.driver_connections[driver_id]["websocket"].send_json(data)
             except:
                 pass
 
-    async def broadcast_to_drivers(self, data: dict, factor: float = None):
-        """Отправить сообщение всем онлайн водителям"""
-        for driver_id, websocket in self.driver_connections.items():
-            try:
-                msg = data.copy()
-                if factor is not None:
-                    msg["factor"] = factor
-                await websocket.send_json(msg)
-            except:
-                pass
+    async def broadcast_to_drivers(self, data: dict, settings_id: int, factor: float = None):
+        for driver_id, conn in self.driver_connections.items():
+            if conn["settings_id"] == settings_id:
+                try:
+                    msg = data.copy()
+                    if factor is not None:
+                        msg["factor"] = factor
+                    await conn["websocket"].send_json(msg)
+                except:
+                    pass
 
 
 manager = ConnectionManager()

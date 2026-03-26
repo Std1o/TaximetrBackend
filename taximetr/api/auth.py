@@ -21,6 +21,10 @@ def sign_in(form_data: OAuth2PasswordRequestForm = Depends(), service: AuthServi
 def get_user(user: User = Depends(get_current_user)):
     return user
 
+@router.put('/set_settings_id', response_model=User)
+async def set_settings_id(settings_id: int, user: User = Depends(get_current_user), service: AuthService = Depends()):
+    return await service.set_settings_id(user.id, settings_id)
+
 @router.post('/change_name', response_model=User)
 async def change_name(new_name: str, user: User = Depends(get_current_user), service: AuthService = Depends()):
     return await service.change_name(user.id, new_name)

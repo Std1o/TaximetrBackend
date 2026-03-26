@@ -46,7 +46,7 @@ async def accept_order(
         settings_service: SettingsService = Depends()
 ):
     order = order_service.get_order(order_id)
-    factor = settings_service.get_settings().factor
+    factor = settings_service.get_settings(order.settings_id).factor
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
@@ -64,7 +64,7 @@ async def accept_order(
             "order_id": order_id,
             "driver_id": data.driver_id,
             "driver_name": driver.name
-        }, factor=factor))
+        }, factor=factor, settings_id=order.settings_id))
 
         # Уведомляем клиента через вебсокет заказа
         asyncio.create_task(manager.send_to_order(order_id, {
@@ -143,9 +143,11 @@ async def complete_order(
 async def cancel_order(
         order_id: int,
         order_service: OrderService = Depends(),
-        driver_service: DriverService = Depends()
+        driver_service: DriverService = Depends(),
+        settings_service: SettingsService = Depends()
 ):
     order = order_service.get_order(order_id)
+    factor = settings_service.get_settings(order.settings_id).factor
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
@@ -174,7 +176,7 @@ async def cancel_order(
                 "type": "order_cancelled",
                 "order_id": order_id,
                 "reason": "Cancelled by client"
-            }))
+            }, factor=factor, settings_id=order.settings_id))
 
         return {"message": "Order cancelled", "order_id": order_id}
     except ValueError as e:

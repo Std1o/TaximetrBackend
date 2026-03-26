@@ -125,7 +125,8 @@ class AuthService:
                            username=created_user.username,
                            id=created_user.id,
                            premium=premium,
-                           access_token=token)
+                           access_token=token,
+                           settings_id=None)
 
     # Настройка логирования
 
@@ -149,7 +150,8 @@ class AuthService:
             'id': user.id,
             'premium': user.premium.isoformat(),
             'access_token': token,
-            'token_type': 'bearer'
+            'token_type': 'bearer',
+            'settings_id': user.settings_id
         }
         try:
             private_user = PrivateUser(**user_dict)
@@ -157,6 +159,12 @@ class AuthService:
         except Exception as e:
             raise
 
+
+    async def set_settings_id(self, user_id: int, settings_id: int):
+        user = self.get_user(user_id)
+        user.settings_id = settings_id
+        self.session.commit()
+        return user
 
     async def change_name(self, user_id: int, new_name: str):
         user = self.get_user(user_id)

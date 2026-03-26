@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -6,6 +7,7 @@ from pydantic import BaseModel, ConfigDict
 class BaseUser(BaseModel):
     phone: str
     username: str
+    settings_id: Optional[int]
 
 class UserCreate(BaseUser):
     password: str

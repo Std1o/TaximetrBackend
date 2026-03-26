@@ -103,8 +103,8 @@ async def websocket_order(websocket: WebSocket, order_id: int, order_service: Or
 # Вебсокет для broadcast водителям (получение новых заказов)
 @router.websocket("/ws/driver/{driver_id}")
 async def websocket_driver_broadcast(websocket: WebSocket, driver_id: int, driver_service: DriverService = Depends()):
-    await manager.connect_driver(websocket, driver_id)
-
+    driver = driver_service.get_driver(driver_id)
+    await manager.connect_driver(websocket, driver_id, driver.settings_id)
     driver_service.set_online(driver_id)
 
     try:

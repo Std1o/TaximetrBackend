@@ -8,6 +8,7 @@ from taximetr.model.enums import DriverStatus, OrderStatus, DistributionAlgorith
 class DriverCreate(BaseModel):
     name: str
     phone: str
+    settings_id: int
 
 
 class DriverResponse(BaseModel):
@@ -18,6 +19,7 @@ class DriverResponse(BaseModel):
     current_lat: float
     current_lng: float
     current_order_id: Optional[int]
+    settings_id: int
 
     class Config:
         from_attributes = True
@@ -37,6 +39,7 @@ class OrderCreate(BaseModel):
     pickup_lng: float
     delivery_lat: float
     delivery_lng: float
+    settings_id: int
 
 
 class OrderResponse(BaseModel):
@@ -48,6 +51,7 @@ class OrderResponse(BaseModel):
     status: OrderStatus
     driver_id: Optional[int]
     created_at: datetime
+    settings_id: int
 
     class Config:
         from_attributes = True

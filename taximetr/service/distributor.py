@@ -75,7 +75,7 @@ class OrderDistributor:
         driver_service = DriverService(order_service.db)
         settings_service = SettingsService(order_service.db)
 
-        online_drivers = driver_service.get_online_drivers()
+        online_drivers = driver_service.get_online_drivers(order.settings_id)
         rejected_drivers = self.rejected_orders.get(order.id, [])
 
         if not online_drivers:
@@ -87,7 +87,7 @@ class OrderDistributor:
             await self.cancel_order(order, order_service, "Все водители отказались от заказа")
             return
 
-        algorithm = settings_service.get_algorithm()
+        algorithm = settings_service.get_algorithm(order.settings_id)
 
         if algorithm == DistributionAlgorithm.ROUND_ROBIN:
             driver = self.get_next_driver_round_robin(online_drivers, rejected_drivers)
@@ -120,8 +120,8 @@ class OrderDistributor:
         driver_service = DriverService(db)
         settings_service = SettingsService(db)
 
-        online_drivers = driver_service.get_online_drivers()
-        factor = settings_service.get_settings().factor
+        online_drivers = driver_service.get_online_drivers(order.settings_id)
+        factor = settings_service.get_settings(order.settings_id).factor
 
         if not online_drivers:
             await manager.broadcast_to_drivers({
@@ -135,7 +135,7 @@ class OrderDistributor:
             }, factor=factor)
             return
 
-        algorithm = settings_service.get_algorithm()
+        algorithm = settings_service.get_algorithm(order.settings_id)
 
         if algorithm == DistributionAlgorithm.ROUND_ROBIN:
             driver = self.get_next_driver_round_robin(online_drivers)
