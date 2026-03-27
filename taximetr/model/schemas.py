@@ -1,28 +1,68 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, Field
+from typing import Optional, List
 from datetime import datetime
 
 from taximetr.model.enums import DriverStatus, OrderStatus, DistributionAlgorithm
 
 
+class CarCreate(BaseModel):
+    brand: str
+    model: str
+    color: str
+    license_plate: str
+    photo: Optional[str] = None
+
+class CarResponse(BaseModel):
+    id: int
+    driver_id: int
+    brand: str
+    model: str
+    color: str
+    license_plate: str
+    photo: Optional[str]
+    is_approved: bool
+    created_at: datetime
+    approved_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
 class DriverCreate(BaseModel):
+    user_id: Optional[int]
     name: str
     phone: str
+    license_photo: Optional[str] = None
     settings_id: int
-
+    cars: List[CarCreate] = Field(default_factory=list) # машины при регистрации
 
 class DriverResponse(BaseModel):
     id: int
+    user_id: int
     name: str
     phone: str
+    license_photo: Optional[str]
+    is_approved: bool
     status: DriverStatus
     current_lat: float
     current_lng: float
     current_order_id: Optional[int]
     settings_id: int
+    cars: List[CarResponse] = Field(default_factory=list)
 
     class Config:
         from_attributes = True
+
+class DriverUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    license_photo: Optional[str] = None
+
+class CarUpdate(BaseModel):
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    color: Optional[str] = None
+    license_plate: Optional[str] = None
+    photo: Optional[str] = None
 
 
 class DriverUpdateLocation(BaseModel):

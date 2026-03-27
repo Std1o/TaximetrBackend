@@ -1,9 +1,15 @@
-from fastapi import APIRouter, Depends
+from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException
 import asyncio
 
-from taximetr.model.schemas import AlgorithmUpdate, AlgorithmResponse, FactorResponse
+from taximetr.model.schemas import AlgorithmUpdate, AlgorithmResponse, FactorResponse, DriverResponse, CarResponse
+from taximetr.service.auth import get_current_user
+from taximetr.service.car_service import CarService
+from taximetr.service.driver_service import DriverService
 from taximetr.service.settings_service import SettingsService
 from taximetr.service.websocket_manager import manager
+from taximetr.tables import User
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -35,3 +41,38 @@ async def update_algorithm(
 ):
     service.update_factor(settings_id, factor)
     return FactorResponse(factor=factor)
+
+@router.get("/pending", response_model=List[DriverResponse])
+def get_pending_drivers(
+    settings_id: int,
+    service: DriverService = Depends()
+):
+    return service.get_pending_drivers(settings_id)
+
+@router.put("/{driver_id}/approve")
+def approve_driver(
+    driver_id: int,
+    approved: bool,
+    service: DriverService = Depends()
+):
+    service.approve_driver(driver_id, approved)
+    return {"message": f"Driver approved: {approved}", "driver_id": driver_id}
+
+@router.get("/pending", response_model=List[CarResponse])
+def get_pending_cars(
+    settings_id: int,
+    service: CarService = Depends(),
+):
+    """Руководитель получает список машин, ожидающих одобрения"""
+    return service.get_pending_cars(settings_id)
+
+
+@router.put("/car/{car_id}/approve")
+def approve_car(
+    car_id: int,
+    approved: bool,
+    service: CarService = Depends(),
+):
+    """Руководитель одобряет машину"""
+    service.approve_car(car_id, approved)
+    return {"message": f"Car approved: {approved}", "car_id": car_id}

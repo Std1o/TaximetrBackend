@@ -5,6 +5,7 @@ from .orders import router as orders_router
 from .settings import router as settings_router
 from .websocket import router as websocket_router
 from .tariffs import router as tariffs_router
+from .cars import router as cars_router
 
 router = APIRouter()
 router.include_router(auth_router)
@@ -13,3 +14,4 @@ router.include_router(orders_router)
 router.include_router(settings_router)
 router.include_router(websocket_router)
 router.include_router(tariffs_router)
+router.include_router(cars_router)

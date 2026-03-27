@@ -2,17 +2,22 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 
 from taximetr.model.schemas import DriverResponse, DriverCreate, DriverUpdateLocation
+from taximetr.service.auth import get_current_user
 from taximetr.service.driver_service import DriverService
 from taximetr.service.websocket_manager import manager
+from taximetr.tables import User
 
 router = APIRouter(prefix="/drivers", tags=["drivers"])
 
 @router.post("/", response_model=DriverResponse)
-def create_driver(driver: DriverCreate, service: DriverService = Depends()):
-    try:
-        return service.create_driver(driver)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+def create_driver(
+    driver: DriverCreate,
+    service: DriverService = Depends(),
+    current_user: User = Depends(get_current_user)
+):
+    driver_data = driver.model_dump()
+    driver_data["user_id"] = current_user.id
+    return service.create_driver(DriverCreate(**driver_data))
 
 @router.get("/", response_model=List[DriverResponse])
 def get_drivers(service: DriverService = Depends()):

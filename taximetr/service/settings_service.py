@@ -38,3 +38,4 @@ class SettingsService:
     def get_algorithm(self, settings_id: int) -> DistributionAlgorithm:
         settings = self.get_settings(settings_id)
         return DistributionAlgorithm(settings.algorithm)
+

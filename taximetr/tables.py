@@ -4,6 +4,7 @@ from datetime import datetime
 import sqlalchemy as sa
 from sqlalchemy import DateTime
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
 from taximetr.model.enums import DriverStatus, OrderStatus, DistributionAlgorithm
 
@@ -32,14 +33,35 @@ class Driver(Base):
     __tablename__ = "drivers"
 
     id = sa.Column(sa.Integer, primary_key=True, index=True)
+    user_id = sa.Column(sa.Integer, sa.ForeignKey("users.id"), nullable=False)
     name = sa.Column(sa.String, nullable=False)
     phone = sa.Column(sa.String, nullable=False)
+    license_photo = sa.Column(sa.String, nullable=True)  # фото прав
+    is_approved = sa.Column(sa.Boolean, default=False)  # одобрен ли водитель
     status = sa.Column(sa.String, default=DriverStatus.OFFLINE.value)
     current_lat = sa.Column(sa.Float, default=0.0)
     current_lng = sa.Column(sa.Float, default=0.0)
     current_order_id = sa.Column(sa.Integer, nullable=True)
     created_at = sa.Column(sa.DateTime, default=datetime.utcnow)
     settings_id = sa.Column(sa.Integer, sa.ForeignKey(Settings.id))
+
+    # Связь с машинами
+    cars = relationship("Car", backref="driver", cascade="all, delete-orphan")
+
+
+class Car(Base):
+    __tablename__ = "cars"
+
+    id = sa.Column(sa.Integer, primary_key=True, index=True)
+    driver_id = sa.Column(sa.Integer, sa.ForeignKey("drivers.id"), nullable=False)
+    brand = sa.Column(sa.String, nullable=False)
+    model = sa.Column(sa.String, nullable=False)
+    color = sa.Column(sa.String, nullable=False)
+    license_plate = sa.Column(sa.String, nullable=False, unique=True)
+    photo = sa.Column(sa.String, nullable=True)  # фото автомобиля
+    is_approved = sa.Column(sa.Boolean, default=False)  # одобрена ли машина
+    created_at = sa.Column(sa.DateTime, default=datetime.utcnow)
+    approved_at = sa.Column(sa.DateTime, nullable=True)
 
 
 class Order(Base):
