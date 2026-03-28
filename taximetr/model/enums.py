@@ -16,3 +16,7 @@ class DriverStatus(str, Enum):
 class DistributionAlgorithm(str, Enum):
     ROUND_ROBIN = "round_robin"
     NEAREST = "nearest"
+
+class RejectReason(str, Enum):
+    CAR_BREAKDOWN = "car_breakdown"  # поломка авто
+    BAD_CLIENT = "bad_client"        # неадекватный клиент

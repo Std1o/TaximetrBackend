@@ -2,7 +2,7 @@ import math
 from typing import List, Optional
 from sqlalchemy.orm import Session
 
-from taximetr.model.enums import DistributionAlgorithm
+from taximetr.model.enums import DistributionAlgorithm, OrderStatus
 from taximetr.service.driver_service import DriverService
 from taximetr.service.order_service import OrderService
 from taximetr.service.settings_service import SettingsService
@@ -15,6 +15,7 @@ class OrderDistributor:
     def __init__(self):
         self.round_robin_index = {}
         self.rejected_orders = {}
+        self.pending_orders = {}
 
     def calculate_distance(self, lat1: float, lng1: float, lat2: float, lng2: float) -> float:
         return math.sqrt((lat1 - lat2) ** 2 + (lng1 - lng2) ** 2)
@@ -145,6 +146,13 @@ class OrderDistributor:
             )
 
         if driver:
+            # Сохраняем информацию об ожидающем заказе
+            self.pending_orders[order.id] = {
+                "driver_id": driver.id,
+                "time": asyncio.get_event_loop().time(),
+                "resolved": False
+            }
+
             await manager.send_to_driver(driver.id, {
                 "type": "new_order",
                 "order": {
@@ -168,6 +176,34 @@ class OrderDistributor:
                         "order_id": order.id,
                         "taken_by": driver.name
                     }, factor=factor)
+
+            # Запускаем проверку таймаута
+            asyncio.create_task(self._check_timeout(order.id, db, driver.id))
+
+    async def _check_timeout(self, order_id: int, db: Session, driver_id: int):
+        """Проверка таймаута через 10 секунд"""
+        await asyncio.sleep(10)
+
+        if order_id in self.pending_orders:
+            pending = self.pending_orders[order_id]
+            if not pending["resolved"] and pending["driver_id"] == driver_id:
+                await manager.send_to_driver(driver_id, {
+                    "type": "order_timeout",
+                    "order_id": order_id,
+                    "message": "Вы не ответили на заказ в течение 10 секунд, заказ передан другому водителю"
+                })
+                # Водитель не ответил
+                order_service = OrderService(db)
+                order = order_service.get_order(order_id)
+                if order and order.status == OrderStatus.PENDING.value:
+                    await self.redistribute_order(order, order_service, driver_id, "timeout")
+                del self.pending_orders[order_id]
+
+    def resolve_order(self, order_id: int, driver_id: int):
+        """Водитель ответил (принял или отклонил)"""
+        if order_id in self.pending_orders:
+            self.pending_orders[order_id]["resolved"] = True
+            del self.pending_orders[order_id]
 
     async def cancel_order(self, order: Order,
                            order_service: OrderService,

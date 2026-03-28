@@ -57,6 +57,7 @@ async def accept_order(
     try:
         order = order_service.accept_order(order_id, data.driver_id)
         driver_service.set_busy(data.driver_id, order_id)
+        distributor.resolve_order(order_id, data.driver_id)
 
         # Уведомляем всех водителей
         asyncio.create_task(manager.broadcast_to_drivers({
@@ -98,6 +99,7 @@ async def reject_order(
 
     try:
         order = order_service.reject_order(order_id, data.driver_id)
+        distributor.resolve_order(order_id, data.driver_id)
 
         # Уведомляем клиента
         asyncio.create_task(manager.send_to_order(order_id, {

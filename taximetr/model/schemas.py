@@ -102,6 +102,7 @@ class OrderAccept(BaseModel):
 
 class OrderReject(BaseModel):
     driver_id: int
+    reason: str
 
 
 class OrderComplete(BaseModel):
