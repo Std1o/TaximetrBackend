@@ -126,3 +126,20 @@ async def websocket_driver_broadcast(websocket: WebSocket, driver_id: int, drive
     except WebSocketDisconnect:
         manager.disconnect_driver(driver_id)
         driver_service.set_offline(driver_id)
+
+
+@router.websocket("/ws/client/{client_id}/{settings_id}")
+async def websocket_client(
+        websocket: WebSocket,
+        client_id: int,
+        settings_id: int
+):
+    await manager.connect_client(websocket, client_id, settings_id)
+
+    try:
+        while True:
+            data = await websocket.receive_json()
+            # Обработка сообщений от клиента, если нужно
+            pass
+    except WebSocketDisconnect:
+        manager.disconnect_client(client_id)

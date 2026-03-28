@@ -8,6 +8,7 @@ class ConnectionManager:
         self.order_connections: Dict[int, Dict[str, Any]] = {}  # {order_id: {"driver": ws, "client": ws}}
         # Храним соединения водителей для broadcast
         self.driver_connections: Dict[int, Any] = {}  # {driver_id: websocket}
+        self.client_connections: Dict[int, Any] = {}
 
     # Методы для работы с заказами
     async def connect_to_order(self, websocket: WebSocket, order_id: int, role: str):
@@ -79,6 +80,27 @@ class ConnectionManager:
                     if factor is not None:
                         msg["factor"] = factor
                     await conn["websocket"].send_json(msg)
+                except:
+                    pass
+
+    async def connect_client(self, websocket: WebSocket, client_id: int, settings_id: int):
+        """Подключение клиента для broadcast"""
+        await websocket.accept()
+        self.client_connections[client_id] = {
+            "websocket": websocket,
+            "settings_id": settings_id
+        }
+
+    def disconnect_client(self, client_id: int):
+        if client_id in self.client_connections:
+            del self.client_connections[client_id]
+
+    async def broadcast_to_clients(self, data: dict, settings_id: int):
+        """Отправить сообщение всем клиентам региона"""
+        for client_id, conn in self.client_connections.items():
+            if conn["settings_id"] == settings_id:
+                try:
+                    await conn["websocket"].send_json(data)
                 except:
                     pass
 
