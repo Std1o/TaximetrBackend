@@ -3,7 +3,7 @@ from typing import List
 import asyncio
 
 from taximetr.model.enums import OrderStatus
-from taximetr.model.schemas import OrderCreate, OrderResponse, OrderAccept, OrderReject, OrderComplete
+from taximetr.model.schemas import OrderCreate, OrderResponse, OrderAccept, OrderReject, OrderComplete, OrderPrice
 from taximetr.service.distributor import distributor
 from taximetr.service.driver_service import DriverService
 from taximetr.service.order_service import OrderService
@@ -191,5 +191,48 @@ async def cancel_order(
             }, factor=factor, settings_id=order.settings_id))
 
         return {"message": "Order cancelled", "order_id": order_id}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put("/{order_id}/price")
+async def set_order_price(
+        order_id: int,
+        data: OrderPrice,
+        order_service: OrderService = Depends(),
+        settings_service: SettingsService = Depends()
+):
+    order = order_service.get_order(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    # Проверяем, что водитель назначен на этот заказ
+    if order.driver_id != data.driver_id:
+        raise HTTPException(status_code=403, detail="Driver not assigned to this order")
+
+    # Проверяем, что заказ в статусе accepted или delivering
+    if order.status not in [OrderStatus.ACCEPTED.value, OrderStatus.DELIVERING.value]:
+        raise HTTPException(status_code=400, detail="Order not in progress")
+
+    try:
+        order = order_service.set_order_price(order_id, data.price)
+        factor = settings_service.get_settings(order.settings_id).factor
+
+        # Отправляем цену клиенту через вебсокет
+        await manager.send_to_order(order_id, {
+            "type": "order_price",
+            "price": data.price,
+            "driver_id": data.driver_id
+        })
+
+        # Уведомляем водителя
+        await manager.send_to_driver(data.driver_id, {
+            "type": "price_set",
+            "order_id": order_id,
+            "price": data.price,
+            "message": "Price sent to client"
+        }, factor=factor)
+
+        return {"message": "Price set", "order_id": order_id, "price": data.price}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

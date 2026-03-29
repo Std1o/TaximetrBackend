@@ -156,3 +156,7 @@ class TariffResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class OrderPrice(BaseModel):
+    driver_id: int
+    price: float

@@ -82,6 +82,7 @@ class Order(Base):
     accepted_at = sa.Column(sa.DateTime, nullable=True)
     completed_at = sa.Column(sa.DateTime, nullable=True)
     settings_id = sa.Column(sa.Integer, sa.ForeignKey(Settings.id))
+    price = sa.Column(sa.Double, default=0.0)
 
 class Tariff(Base):
     __tablename__ = "tariffs"

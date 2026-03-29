@@ -93,3 +93,11 @@ class OrderService:
             self.db.commit()
             self.db.refresh(order)
         return order
+
+    def set_order_price(self, order_id: int, price: float) -> Optional[Order]:
+        order = self.get_order(order_id)
+        if order:
+            order.price = price  # нужно добавить поле price в таблицу Order
+            self.db.commit()
+            self.db.refresh(order)
+        return order
