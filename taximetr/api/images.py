@@ -5,16 +5,16 @@ import os
 import re
 
 
-router = APIRouter(prefix='/images')
+router = APIRouter(prefix='/images', tags=["images"])
 
 @router.get('/{image_name}')
 def get_image(image_name: str):
-    return FileResponse(f"vo/images/{image_name}".encode('utf-8').decode('utf-8'))
+    return FileResponse(f"taximetr/images/{image_name}".encode('utf-8').decode('utf-8'))
 
 @router.post("/upload/")
 async def create_upload_file(request: Request, upload_file: UploadFile):
     try:
-        file_path = f"vo/images/{upload_file.filename}"
+        file_path = f"taximetr/images/{upload_file.filename}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(upload_file.file, buffer)
     finally:
