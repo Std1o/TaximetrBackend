@@ -58,7 +58,6 @@ class Car(Base):
     model = sa.Column(sa.String, nullable=False)
     color = sa.Column(sa.String, nullable=False)
     license_plate = sa.Column(sa.String, nullable=False, unique=True)
-    photo = sa.Column(sa.String, nullable=True)  # фото автомобиля
     is_approved = sa.Column(sa.Boolean, default=False)  # одобрена ли машина
     created_at = sa.Column(sa.DateTime, default=datetime.utcnow)
     approved_at = sa.Column(sa.DateTime, nullable=True)

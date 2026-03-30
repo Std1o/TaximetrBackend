@@ -10,7 +10,6 @@ class CarCreate(BaseModel):
     model: str
     color: str
     license_plate: str
-    photo: Optional[str] = None
 
 class CarResponse(BaseModel):
     id: int
@@ -19,7 +18,6 @@ class CarResponse(BaseModel):
     model: str
     color: str
     license_plate: str
-    photo: Optional[str]
     is_approved: bool
     created_at: datetime
     approved_at: Optional[datetime]
@@ -62,7 +60,6 @@ class CarUpdate(BaseModel):
     model: Optional[str] = None
     color: Optional[str] = None
     license_plate: Optional[str] = None
-    photo: Optional[str] = None
 
 
 class DriverUpdateLocation(BaseModel):

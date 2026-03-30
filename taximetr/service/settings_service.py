@@ -19,6 +19,10 @@ class SettingsService:
         self.session.refresh(settings)
         return settings
 
+    def get_all_settings(self) -> Settings:
+        settings = self.session.query(Settings).all()
+        return settings
+
     def get_settings(self, settings_id: int) -> Settings:
         settings = self.session.query(Settings).filter_by(id=settings_id).first()
         return settings

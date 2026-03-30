@@ -23,6 +23,11 @@ def get_settings(settings_id: int, service: SettingsService = Depends()):
     settings = service.get_settings(settings_id)
     return settings
 
+@router.get("/all")
+def get_all_settings(service: SettingsService = Depends()):
+    settings = service.get_all_settings()
+    return settings
+
 
 @router.put("/algorithm", response_model=AlgorithmResponse)
 async def update_algorithm(
