@@ -63,7 +63,7 @@ def approve_driver(
     service.approve_driver(driver_id, approved)
     return {"message": f"Driver approved: {approved}", "driver_id": driver_id}
 
-@router.get("/pending", response_model=List[CarResponse])
+@router.get("/pending/cars", response_model=List[CarResponse])
 def get_pending_cars(
     settings_id: int,
     service: CarService = Depends(),
