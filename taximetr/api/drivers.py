@@ -23,9 +23,9 @@ def create_driver(
 def get_drivers(service: DriverService = Depends()):
     return service.get_all_drivers()
 
-@router.get("/{driver_id}", response_model=DriverResponse)
-def get_driver(driver_id: int, service: DriverService = Depends()):
-    driver = service.get_driver(driver_id)
+@router.get("/{user_id}", response_model=DriverResponse)
+def get_driver(user_id: int, service: DriverService = Depends()):
+    driver = service.get_driver_by_user_id(user_id)
     if not driver:
         raise HTTPException(status_code=404, detail="Driver not found")
     return driver

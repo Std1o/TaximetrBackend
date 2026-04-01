@@ -39,7 +39,7 @@ async def update_algorithm(
     return AlgorithmResponse(algorithm=algorithm_update.algorithm)
 
 @router.put("/factor", response_model=FactorResponse)
-async def update_algorithm(
+async def update_factor(
         settings_id: int,
         factor: float,
         service: SettingsService = Depends()

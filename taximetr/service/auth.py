@@ -116,7 +116,8 @@ class AuthService:
             phone=user_data.phone,
             username=user_data.username,
             premium=premium,
-            password_hash=self.hash_password(user_data.password))
+            password_hash=self.hash_password(user_data.password),
+            settings_id=user_data.settings_id)
         self.session.add(user)
         self.session.commit()
         token = self.create_token(user)
@@ -126,7 +127,7 @@ class AuthService:
                            id=created_user.id,
                            premium=premium,
                            access_token=token,
-                           settings_id=None)
+                           settings_id=created_user.settings_id)
 
     # Настройка логирования
 

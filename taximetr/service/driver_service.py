@@ -70,6 +70,9 @@ class DriverService:
     def get_driver(self, driver_id: int) -> Optional[Driver]:
         return self.session.query(Driver).filter(Driver.id == driver_id).first()
 
+    def get_driver_by_user_id(self, user_id: int) -> Optional[Driver]:
+        return self.session.query(Driver).filter(Driver.user_id == user_id).first()
+
     def update_location(self, driver_id: int, location: DriverUpdateLocation) -> Optional[Driver]:
         driver = self.get_driver(driver_id)
         if driver:
