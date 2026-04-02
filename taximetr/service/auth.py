@@ -111,7 +111,7 @@ class AuthService:
     def reg(self, user_data: UserCreate) -> PrivateUser:
         if self.get_user_by_phone(user_data.phone):
             raise HTTPException(status_code=418, detail="User with this phone already exists")
-        premium = (datetime.now() - timedelta(days=1)).date()
+        premium = (datetime.now() + timedelta(days=1)).date()
         user = tables.User(
             phone=user_data.phone,
             username=user_data.username,
