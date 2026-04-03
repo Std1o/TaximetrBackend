@@ -8,6 +8,7 @@ from .tariffs import router as tariffs_router
 from .cars import router as cars_router
 from .notifications import router as notifications_router
 from .images import router as images_router
+from .drivers_tickets import router as drivers_tickets_router
 
 router = APIRouter()
 router.include_router(auth_router)
@@ -19,3 +20,4 @@ router.include_router(tariffs_router)
 router.include_router(cars_router)
 router.include_router(notifications_router)
 router.include_router(images_router)
+router.include_router(drivers_tickets_router)

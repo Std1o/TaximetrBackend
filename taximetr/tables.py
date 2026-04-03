@@ -1,8 +1,6 @@
-import uuid
 from datetime import datetime
 
 import sqlalchemy as sa
-from sqlalchemy import DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -101,3 +99,11 @@ class Tariff(Base):
     country_price_per_min = sa.Column(sa.Double, default=5.0)
     is_active = sa.Column(sa.Boolean, default=True)
     distance_and_time = sa.Column(sa.Boolean, default=True)
+
+class DriversTickets(Base):
+    __tablename__ = 'drivers_tickets'
+
+    user_id = sa.Column(sa.Integer, sa.ForeignKey(User.id), primary_key=True)
+    username = sa.Column(sa.String, nullable=False)
+    phone = sa.Column(sa.Text)
+    image_url = sa.Column(sa.String)
