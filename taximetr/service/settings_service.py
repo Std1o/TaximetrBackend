@@ -39,6 +39,12 @@ class SettingsService:
         self.session.commit()
         self.session.refresh(settings)
 
+    def update_payment(self, settings_id: int, payment: int):
+        settings = self.get_settings(settings_id)
+        settings.payment = payment
+        self.session.commit()
+        self.session.refresh(settings)
+
     def get_algorithm(self, settings_id: int) -> DistributionAlgorithm:
         settings = self.get_settings(settings_id)
         return DistributionAlgorithm(settings.algorithm)

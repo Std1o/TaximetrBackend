@@ -16,6 +16,7 @@ class Settings(Base):
     algorithm = sa.Column(sa.String, default=DistributionAlgorithm.ROUND_ROBIN.value)
     factor = sa.Column(sa.Double, default=1.0)
     region = sa.Column(sa.String, nullable=False)
+    payment = sa.Column(sa.Integer, default=200)
 
 class User(Base):
     __tablename__ = 'users'

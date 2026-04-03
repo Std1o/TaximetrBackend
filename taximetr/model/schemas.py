@@ -113,6 +113,9 @@ class AlgorithmResponse(BaseModel):
 class FactorResponse(BaseModel):
     factor: float
 
+class PaymentResponse(BaseModel):
+    payment: int
+
 
 class AlgorithmUpdate(BaseModel):
     algorithm: DistributionAlgorithm

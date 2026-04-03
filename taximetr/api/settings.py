@@ -3,7 +3,8 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 import asyncio
 
-from taximetr.model.schemas import AlgorithmUpdate, AlgorithmResponse, FactorResponse, DriverResponse, CarResponse
+from taximetr.model.schemas import AlgorithmUpdate, AlgorithmResponse, FactorResponse, DriverResponse, CarResponse, \
+    PaymentResponse
 from taximetr.service.auth import get_current_user
 from taximetr.service.car_service import CarService
 from taximetr.service.driver_service import DriverService
@@ -46,6 +47,15 @@ async def update_factor(
 ):
     service.update_factor(settings_id, factor)
     return FactorResponse(factor=factor)
+
+@router.put("/payment", response_model=PaymentResponse)
+async def update_payment(
+        settings_id: int,
+        payment: int,
+        service: SettingsService = Depends()
+):
+    service.update_payment(settings_id, payment)
+    return PaymentResponse(payment=payment)
 
 @router.get("/pending", response_model=List[DriverResponse])
 def get_pending_drivers(
