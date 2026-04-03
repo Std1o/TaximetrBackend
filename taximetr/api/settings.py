@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import asyncio
 
 from taximetr.model.schemas import AlgorithmUpdate, AlgorithmResponse, FactorResponse, DriverResponse, CarResponse, \
-    PaymentResponse
+    PaymentResponse, SettingsCreate
 from taximetr.service.auth import get_current_user
 from taximetr.service.car_service import CarService
 from taximetr.service.driver_service import DriverService
@@ -15,8 +15,8 @@ from taximetr.tables import User
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 @router.post("/")
-def add_settings(region: str, service: SettingsService = Depends()):
-    settings = service.add_settings(region)
+def add_settings(settings_create: SettingsCreate, service: SettingsService = Depends()):
+    settings = service.add_settings(settings_create.region, settings_create.card)
     return settings
 
 @router.get("/")

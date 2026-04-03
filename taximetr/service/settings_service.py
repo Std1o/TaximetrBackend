@@ -11,9 +11,10 @@ class SettingsService:
     def __init__(self, session: Session = Depends(get_session)):
         self.session = session
 
-    def add_settings(self, region: str):
+    def add_settings(self, region: str, card: str):
         settings = Settings()
         settings.region = region
+        settings.card = card
         self.session.add(settings)
         self.session.commit()
         self.session.refresh(settings)

@@ -160,3 +160,7 @@ class TariffResponse(BaseModel):
 class OrderPrice(BaseModel):
     driver_id: int
     price: float
+
+class SettingsCreate(BaseModel):
+    region: str
+    card: str
