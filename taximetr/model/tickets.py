@@ -6,6 +6,7 @@ class Ticket(BaseModel):
     username: str
     phone: str
     image_url: str
+    debt: float
 
     class Config:
         from_attributes = True

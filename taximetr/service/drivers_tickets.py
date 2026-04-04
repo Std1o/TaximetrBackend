@@ -27,7 +27,8 @@ class TicketService:
             user_id=ticket.user_id,
             username=ticket.username,
             phone=ticket.phone,
-            image_url=ticket.image_url
+            image_url=ticket.image_url,
+            debt = ticket.debt
         )
         self.session.add(new_ticket)
         self.session.commit()
