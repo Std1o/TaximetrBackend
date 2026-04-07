@@ -124,18 +124,6 @@ class OrderDistributor:
         online_drivers = driver_service.get_online_drivers(order.settings_id)
         factor = settings_service.get_settings(order.settings_id).factor
 
-        if not online_drivers:
-            await manager.broadcast_to_drivers({
-                "type": "new_order",
-                "order": {
-                    "id": order.id,
-                    "pickup_address": order.pickup_address,
-                    "delivery_address": order.delivery_address
-                },
-                "message": "Нет свободных водителей"
-            }, factor=factor)
-            return
-
         algorithm = settings_service.get_algorithm(order.settings_id)
 
         if algorithm == DistributionAlgorithm.ROUND_ROBIN:
@@ -196,7 +184,7 @@ class OrderDistributor:
                 order_service = OrderService(db)
                 order = order_service.get_order(order_id)
                 if order and order.status == OrderStatus.PENDING.value:
-                    await self.redistribute_order(order, order_service, driver_id, "timeout")
+                    await self.redistribute_order(order, order_service, driver_id)
                 del self.pending_orders[order_id]
 
     def resolve_order(self, order_id: int, driver_id: int):

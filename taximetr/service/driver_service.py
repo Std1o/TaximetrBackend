@@ -112,5 +112,7 @@ class DriverService:
     def get_online_drivers(self, settings_id: int) -> List[Driver]:
         return self.session.query(Driver).filter(
             Driver.status == DriverStatus.ONLINE.value,
-            Driver.settings_id == settings_id
+            Driver.settings_id == settings_id,
+            Driver.is_approved == True,
+            Driver.cars.any(Car.is_approved == True)  # Если связь настроена
         ).order_by(Driver.id).all()

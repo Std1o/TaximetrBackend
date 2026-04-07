@@ -105,12 +105,6 @@ async def websocket_order(websocket: WebSocket, order_id: int, order_service: Or
 async def websocket_driver_broadcast(websocket: WebSocket, driver_id: int, driver_service: DriverService = Depends()):
     driver = driver_service.get_driver(driver_id)
     await manager.connect_driver(websocket, driver_id, driver.settings_id)
-    if not driver or not driver.is_approved:
-        await websocket.close(code=1008, reason="Driver not approved")
-        return
-    if not any(car.is_approved for car in driver.cars):
-        await websocket.close(code=1008, reason="No approved car")
-        return
     driver_service.set_online(driver_id)
 
     try:
