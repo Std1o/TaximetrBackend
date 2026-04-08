@@ -31,7 +31,7 @@ def get_orders(service: OrderService = Depends()):
 
 @router.get("/{order_id}", response_model=OrderResponse)
 def get_order(order_id: int, service: OrderService = Depends()):
-    order = service.get_order(order_id)
+    order = service.get_table_order(order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     return order
@@ -56,6 +56,7 @@ async def accept_order(
 
     try:
         order = order_service.accept_order(order_id, data.driver_id)
+        order = order_service.get_order(order.id)
         driver_service.set_busy(data.driver_id, order_id)
         distributor.resolve_order(order_id, data.driver_id)
 
@@ -75,6 +76,9 @@ async def accept_order(
             "driver_phone": driver.phone,
             "lat": driver.current_lat,
             "lng": driver.current_lng,
+            "order_id": order.id,
+            "status": order.status,
+            "order": order.model_dump(mode='json'),
         }))
 
         return {"message": "Order accepted", "order_id": order_id}
@@ -105,7 +109,12 @@ async def reject_order(
         asyncio.create_task(manager.send_to_order(order_id, {
             "type": "order_rejected",
             "driver_id": data.driver_id,
-            "message": "Driver rejected the order"
+            "message": "Driver rejected the order",
+            "driver_name": driver.name,
+            "order_id": order.id,
+            "status": order.status,
+            "order": order.model_dump(mode='json'),
+            "driver_phone": driver.phone,
         }))
 
         # Перераспределяем заказ
@@ -126,6 +135,8 @@ async def complete_order(
 ):
     try:
         order = order_service.complete_order(order_id, data.driver_id)
+        order = order_service.get_order(order.id)
+        driver = driver_service.get_driver(order.driver_id)
         if not order:
             raise HTTPException(status_code=404, detail="Order not found")
 
@@ -136,7 +147,11 @@ async def complete_order(
         # Уведомляем клиента
         asyncio.create_task(manager.send_to_order(order_id, {
             "type": "order_completed",
-            "order_id": order_id
+            "order_id": order_id,
+            "driver_name": driver.name,
+            "status": order.status,
+            "order": order.model_dump(mode='json'),
+            "driver_phone": driver.phone,
         }))
 
         # Уведомляем водителя
@@ -159,6 +174,7 @@ async def cancel_order(
         settings_service: SettingsService = Depends()
 ):
     order = order_service.get_order(order_id)
+    driver = driver_service.get_driver(order.driver_id)
     factor = settings_service.get_settings(order.settings_id).factor
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -179,7 +195,11 @@ async def cancel_order(
         asyncio.create_task(manager.send_to_order(order_id, {
             "type": "order_cancelled",
             "order_id": order_id,
-            "reason": "Cancelled by client"
+            "reason": "Cancelled by client",
+            "driver_name": driver.name,
+            "status": order.status,
+            "order": order.model_dump(mode='json'),
+            "driver_phone": driver.phone,
         }))
 
         # Уведомляем водителей (если заказ был в статусе PENDING)
@@ -200,9 +220,11 @@ async def set_order_price(
         order_id: int,
         data: OrderPrice,
         order_service: OrderService = Depends(),
-        settings_service: SettingsService = Depends()
+        settings_service: SettingsService = Depends(),
+        driver_service: DriverService = Depends()
 ):
     order = order_service.get_order(order_id)
+    driver = driver_service.get_driver(order.driver_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
@@ -216,13 +238,19 @@ async def set_order_price(
 
     try:
         order = order_service.set_order_price(order_id, data.price)
+        order = order_service.get_order(order.id)
         factor = settings_service.get_settings(order.settings_id).factor
 
         # Отправляем цену клиенту через вебсокет
         await manager.send_to_order(order_id, {
             "type": "order_price",
             "price": data.price,
-            "driver_id": data.driver_id
+            "driver_id": data.driver_id,
+            "driver_name": driver.name,
+            "order_id": order.id,
+            "status": order.status,
+            "order": order.model_dump(mode='json'),
+            "driver_phone": driver.phone,
         })
 
         # Уведомляем водителя

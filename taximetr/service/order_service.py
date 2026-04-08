@@ -5,7 +5,7 @@ from datetime import datetime
 
 from taximetr.database import get_session
 from taximetr.model.enums import OrderStatus
-from taximetr.model.schemas import OrderCreate
+from taximetr.model.schemas import OrderCreate, OrderResponse
 from taximetr.tables import Order
 
 
@@ -24,11 +24,17 @@ class OrderService:
     def get_all_orders(self) -> List[Order]:
         return self.db.query(Order).order_by(Order.created_at.desc()).all()
 
-    def get_order(self, order_id: int) -> Optional[Order]:
+    def get_table_order(self, order_id: int) -> Optional[Order]:
         return self.db.query(Order).filter(Order.id == order_id).first()
 
+    def get_order(self, order_id: int) -> Optional[OrderResponse]:
+        order = self.db.query(Order).filter(Order.id == order_id).first()
+        if order:
+            return OrderResponse.model_validate(order)
+        return None
+
     def accept_order(self, order_id: int, driver_id: int) -> Optional[Order]:
-        order = self.get_order(order_id)
+        order = self.get_table_order(order_id)
         if not order:
             return None
 
@@ -45,7 +51,7 @@ class OrderService:
 
     def reject_order(self, order_id: int, driver_id: int) -> Optional[Order]:
         """Водитель отказался от заказа"""
-        order = self.get_order(order_id)
+        order = self.get_table_order(order_id)
         if not order:
             return None
 
@@ -61,7 +67,7 @@ class OrderService:
         return order
 
     def complete_order(self, order_id: int, driver_id: int) -> Optional[Order]:
-        order = self.get_order(order_id)
+        order = self.get_table_order(order_id)
         if not order:
             return None
 
@@ -76,7 +82,7 @@ class OrderService:
         return order
 
     def update_status(self, order_id: int, status: str) -> Optional[Order]:
-        order = self.get_order(order_id)
+        order = self.get_table_order(order_id)
         if order:
             order.status = status
             if status == OrderStatus.COMPLETED.value:
@@ -87,7 +93,7 @@ class OrderService:
 
     def cancel_order(self, order_id: int) -> Optional[Order]:
         """Отмена заказа"""
-        order = self.get_order(order_id)
+        order = self.get_table_order(order_id)
         if order and order.status in [OrderStatus.PENDING.value, OrderStatus.ACCEPTED.value]:
             order.status = OrderStatus.CANCELLED.value
             self.db.commit()
@@ -95,7 +101,7 @@ class OrderService:
         return order
 
     def set_order_price(self, order_id: int, price: float) -> Optional[Order]:
-        order = self.get_order(order_id)
+        order = self.get_table_order(order_id)
         if order:
             order.price = price  # нужно добавить поле price в таблицу Order
             self.db.commit()

@@ -182,7 +182,7 @@ class OrderDistributor:
                 })
                 # Водитель не ответил
                 order_service = OrderService(db)
-                order = order_service.get_order(order_id)
+                order = order_service.get_table_order(order_id)
                 if order and order.status == OrderStatus.PENDING.value:
                     await self.redistribute_order(order, order_service, driver_id)
                 del self.pending_orders[order_id]
@@ -198,11 +198,14 @@ class OrderDistributor:
                            reason: str = "Все водители отказались от заказа"):
         """Отмена заказа"""
         order_service.cancel_order(order.id)
+        order = order_service.get_order(order.id)
 
         await manager.send_to_order(order.id, {
             "type": "order_cancelled",
             "order_id": order.id,
-            "reason": reason
+            "reason": reason,
+            "status": order.status,
+            "order": order.model_dump(mode='json')
         })
 
         if order.id in self.rejected_orders:

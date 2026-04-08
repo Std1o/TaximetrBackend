@@ -4,6 +4,7 @@ from typing import List
 from taximetr.model.schemas import DriverResponse, DriverCreate, DriverUpdateLocation
 from taximetr.service.auth import get_current_user
 from taximetr.service.driver_service import DriverService
+from taximetr.service.order_service import OrderService
 from taximetr.service.websocket_manager import manager
 from taximetr.tables import User
 
@@ -35,8 +36,10 @@ async def update_location(
         driver_id: int,
         location: DriverUpdateLocation,
         driver_service: DriverService = Depends(),
+        order_service: OrderService = Depends()
 ):
     driver = driver_service.update_location(driver_id, location)
+    order = order_service.get_order(driver.current_order_id)
     if not driver:
         raise HTTPException(status_code=404, detail="Driver not found")
 
@@ -50,7 +53,11 @@ async def update_location(
                 "lat": location.lat,
                 "lng": location.lng,
                 "driver_id": driver_id,
-                "driver_name": driver.name
+                "driver_name": driver.name,
+                "order_id": order.id,
+                "status": order.status,
+                "order": order.model_dump(mode='json'),
+                "driver_phone": driver.phone,
             }
         )
 

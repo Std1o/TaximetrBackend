@@ -27,6 +27,7 @@ async def websocket_order(websocket: WebSocket, order_id: int, order_service: Or
 
         # Проверяем заказ
         order = order_service.get_order(order_id)
+        driver = driver_service.get_driver(order.driver_id)
         if not order:
             await websocket.close(code=1008, reason="Order not found")
             return
@@ -45,15 +46,11 @@ async def websocket_order(websocket: WebSocket, order_id: int, order_service: Or
             "type": "connected",
             "order_id": order_id,
             "role": role,
-            "status": order.status
+            "status": order.status,
+            "order": order.model_dump(mode='json'),
+            "driver_phone": driver.phone if driver else None,
+            "driver_name": driver.name if driver else None
         })
-
-        # Если водитель подключился и заказ в статусе accepted, уведомляем клиента
-        if role == "driver" and order.status == "accepted":
-            await manager.send_to_role_in_order(order_id, "client", {
-                "type": "driver_connected",
-                "message": "Driver is online"
-            })
 
         # Обработка сообщений
         while True:
@@ -81,20 +78,11 @@ async def websocket_order(websocket: WebSocket, order_id: int, order_service: Or
                     order_service.update_status(order_id, new_status)
                     await manager.send_to_order(order_id, {
                         "type": "status_changed",
-                        "status": new_status
+                        "status": new_status,
+                        "order": order.model_dump(mode='json'),
+                        "driver_phone": driver.phone if driver else None,
+                        "driver_name": driver.name if driver else None
                     })
-
-            elif msg_type == "chat":
-                # Чат между водителем и клиентом
-                text = message.get("text")
-                await manager.send_to_role_in_order(order_id,
-                                                    "client" if role == "driver" else "driver",
-                                                    {
-                                                        "type": "chat",
-                                                        "from": role,
-                                                        "text": text,
-                                                        "timestamp": message.get("timestamp")
-                                                    })
 
     except WebSocketDisconnect:
         manager.disconnect_from_order(websocket)

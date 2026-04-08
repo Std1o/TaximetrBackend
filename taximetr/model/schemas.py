@@ -89,9 +89,13 @@ class OrderResponse(BaseModel):
     driver_id: Optional[int]
     created_at: datetime
     settings_id: int
+    price: float
 
     class Config:
         from_attributes = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
 
 
 class OrderAccept(BaseModel):

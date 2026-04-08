@@ -84,7 +84,7 @@ async def notify_order_client(
 ):
     """Отправить уведомление клиенту конкретного заказа"""
 
-    order = order_service.get_order(order_id)
+    order = order_service.get_table_order(order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
