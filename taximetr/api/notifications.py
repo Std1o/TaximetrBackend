@@ -80,11 +80,13 @@ async def notify_order_client(
         title: str,
         body: str,
         current_user: User = Depends(get_current_user),
-        order_service: OrderService = Depends()
+        order_service: OrderService = Depends(),
+        driver_service: DriverService = Depends()
 ):
     """Отправить уведомление клиенту конкретного заказа"""
 
-    order = order_service.get_table_order(order_id)
+    order = order_service.get_order(order_id)
+    driver = driver_service.get_driver(order.driver_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
@@ -92,7 +94,11 @@ async def notify_order_client(
         "type": "push_notification",
         "title": title,
         "body": body,
-        "sender": current_user.username
+        "sender": current_user.username,
+        "driver_name": driver.name if driver else None,
+        "status": order.status,
+        "order": order.model_dump(mode='json'),
+        "driver_phone": driver.phone if driver else  None,
     })
 
     return {"message": f"Notification sent to client of order {order_id}"}
