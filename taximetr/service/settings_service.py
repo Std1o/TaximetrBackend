@@ -30,7 +30,7 @@ class SettingsService:
 
     def update_algorithm(self, settings_id: int, algorithm: DistributionAlgorithm):
         settings = self.get_settings(settings_id)
-        settings.distribution_algorithm = algorithm.value
+        settings.algorithm = algorithm.value
         self.session.commit()
         self.session.refresh(settings)
 
