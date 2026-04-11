@@ -110,3 +110,11 @@ class DriversTickets(Base):
     phone = sa.Column(sa.Text)
     image_url = sa.Column(sa.String)
     debt = sa.Column(sa.Double)
+
+class Tickets(Base):
+    __tablename__ = 'tickets'
+
+    user_id = sa.Column(sa.Integer, sa.ForeignKey(User.id), primary_key=True)
+    username = sa.Column(sa.String, nullable=False)
+    phone = sa.Column(sa.Text)
+    image_url = sa.Column(sa.String)
