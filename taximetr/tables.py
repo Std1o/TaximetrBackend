@@ -118,3 +118,9 @@ class Tickets(Base):
     username = sa.Column(sa.String, nullable=False)
     phone = sa.Column(sa.Text)
     image_url = sa.Column(sa.String)
+
+class Premium(Base):
+    __tablename__ = 'premium'
+
+    settings_id = sa.Column(sa.Integer, sa.ForeignKey(Settings.id), primary_key=True)
+    sum = sa.Column(sa.Integer, nullable=False)

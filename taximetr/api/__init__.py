@@ -10,6 +10,7 @@ from .notifications import router as notifications_router
 from .images import router as images_router
 from .drivers_tickets import router as drivers_tickets_router
 from .tickets import router as tickets_router
+from .premium import router as premium_router
 
 router = APIRouter()
 router.include_router(auth_router)
@@ -23,3 +24,4 @@ router.include_router(notifications_router)
 router.include_router(images_router)
 router.include_router(drivers_tickets_router)
 router.include_router(tickets_router)
+router.include_router(premium_router)
