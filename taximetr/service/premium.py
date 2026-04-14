@@ -18,10 +18,11 @@ class PremiumService:
         statement = select(tables.Premium).filter_by(settings_id=settings_id)
         return self.session.execute(statement).scalars().first()
 
-    async def create(self, settings_id: int, sum: int) -> tables.Premium:
+    async def create(self, settings_id: int, sum: int, card: str) -> tables.Premium:
         new_premium = tables.Premium(
             settings_id=settings_id,
-            sum=sum
+            sum=sum,
+            card=card
         )
         self.session.add(new_premium)
         self.session.commit()

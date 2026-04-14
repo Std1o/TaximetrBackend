@@ -124,3 +124,4 @@ class Premium(Base):
 
     settings_id = sa.Column(sa.Integer, sa.ForeignKey(Settings.id), primary_key=True)
     sum = sa.Column(sa.Integer, nullable=False)
+    card = sa.Column(sa.String, nullable=False)
