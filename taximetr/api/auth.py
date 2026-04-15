@@ -8,8 +8,8 @@ router = APIRouter(prefix='/auth')
 
 
 @router.post('/sign-up', response_model=PrivateUser)
-def sign_up(user_data: UserCreate, service: AuthService = Depends()):
-    return service.reg(user_data)
+def sign_up(user_data: UserCreate, is_admin: bool = False, service: AuthService = Depends()):
+    return service.reg(user_data, is_admin)
 
 
 @router.post('/sign-in', response_model=PrivateUser)
