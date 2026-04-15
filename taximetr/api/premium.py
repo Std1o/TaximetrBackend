@@ -16,9 +16,10 @@ router = APIRouter(prefix='/premium', tags=["premium"])
 async def create(
         settings_id: int,
         sum: int,
+        card: str,
         service: PremiumService = Depends()
 ):
-     return await service.create(settings_id, sum)
+     return await service.create(settings_id, sum, card)
 
 @router.get('/')
 async def get(settings_id: int, service: PremiumService = Depends()):
