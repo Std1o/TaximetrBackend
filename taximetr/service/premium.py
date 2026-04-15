@@ -29,3 +29,11 @@ class PremiumService:
         self.session.refresh(new_premium)
 
         return new_premium
+
+    async def update(self, settings_id: int, sum: int, card: str):
+        premium = await self.get_premium(settings_id)
+        premium.sum = sum
+        premium.card = card
+        self.session.commit()
+        self.session.refresh(premium)
+        return premium

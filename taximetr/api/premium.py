@@ -24,3 +24,12 @@ async def create(
 @router.get('/')
 async def get(settings_id: int, service: PremiumService = Depends()):
     return await service.get_premium(settings_id)
+
+@router.put("/")
+async def update(
+        settings_id: int,
+        sum: int,
+        card: str,
+        service: PremiumService = Depends()
+):
+     return await service.update(settings_id, sum, card)
