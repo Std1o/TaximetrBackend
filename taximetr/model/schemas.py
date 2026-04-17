@@ -139,6 +139,7 @@ class TariffCreate(BaseModel):
     country_price_per_min: float = 5.0
     is_active: bool = True
     distance_and_time: bool = True
+    settings_id: int = -1
 
 
 class TariffResponse(BaseModel):

@@ -12,8 +12,8 @@ def create_tariff(tariff: TariffCreate, service: TariffService = Depends()):
 
 
 @router.get("/", response_model=List[TariffResponse])
-def get_tariffs(service: TariffService = Depends()):
-    return service.get_all_tariffs()
+def get_tariffs(settings_id: int, service: TariffService = Depends()):
+    return service.get_all_tariffs(settings_id)
 
 
 @router.get("/{tariff_id}", response_model=TariffResponse)

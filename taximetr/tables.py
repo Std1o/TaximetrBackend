@@ -101,6 +101,7 @@ class Tariff(Base):
     country_price_per_min = sa.Column(sa.Double, default=5.0)
     is_active = sa.Column(sa.Boolean, default=True)
     distance_and_time = sa.Column(sa.Boolean, default=True)
+    settings_id = sa.Column(sa.Integer, sa.ForeignKey(Settings.id))
 
 class DriversTickets(Base):
     __tablename__ = 'drivers_tickets'
