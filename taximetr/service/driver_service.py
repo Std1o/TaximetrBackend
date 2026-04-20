@@ -109,6 +109,11 @@ class DriverService:
             self.session.refresh(driver)
         return driver
 
+    def delete_driver(self, driver_id: int):
+        driver = self.get_driver(driver_id)
+        self.session.delete(driver)
+        self.session.commit()
+
     def get_online_drivers(self, settings_id: int) -> List[Driver]:
         return self.session.query(Driver).filter(
             Driver.status == DriverStatus.ONLINE.value,

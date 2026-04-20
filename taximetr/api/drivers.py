@@ -76,3 +76,7 @@ def set_offline(driver_id: int, service: DriverService = Depends()):
     if not driver:
         raise HTTPException(status_code=404, detail="Driver not found")
     return {"message": "Driver is offline", "driver_id": driver_id}
+
+@router.delete("/{driver_id}")
+def delete_driver(driver_id: int, service: DriverService = Depends()):
+    service.delete_driver(driver_id)
