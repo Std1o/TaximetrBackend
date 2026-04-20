@@ -172,3 +172,8 @@ class AuthService:
         user.username = new_name
         self.session.commit()
         return user
+
+    def delete_user(self, user_id: int):
+        user = self.get_user(user_id)
+        self.session.delete(user)
+        self.session.commit()
