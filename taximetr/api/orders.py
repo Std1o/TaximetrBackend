@@ -8,6 +8,7 @@ from taximetr.service.distributor import distributor
 from taximetr.service.driver_service import DriverService
 from taximetr.service.order_service import OrderService
 from taximetr.service.settings_service import SettingsService
+from taximetr.service.stop_points import StopPointsService
 from taximetr.service.websocket_manager import manager
 
 router = APIRouter(prefix="/orders", tags=["orders"])
@@ -43,7 +44,8 @@ async def accept_order(
         data: OrderAccept,
         order_service: OrderService = Depends(),
         driver_service: DriverService = Depends(),
-        settings_service: SettingsService = Depends()
+        settings_service: SettingsService = Depends(),
+        stop_points_service: StopPointsService = Depends()
 ):
     order = order_service.get_order(order_id)
     factor = settings_service.get_settings(order.settings_id).factor
@@ -79,6 +81,7 @@ async def accept_order(
             "order_id": order.id,
             "status": order.status,
             "order": order.model_dump(mode='json'),
+            "stop_points": stop_points_service.get_stop_points(order_id)
         }))
 
         return {"message": "Order accepted", "order_id": order_id}
@@ -91,7 +94,8 @@ async def reject_order(
         order_id: int,
         data: OrderReject,
         order_service: OrderService = Depends(),
-        driver_service: DriverService = Depends()
+        driver_service: DriverService = Depends(),
+        stop_points_service: StopPointsService = Depends()
 ):
     order = order_service.get_order(order_id)
     if not order:
@@ -115,10 +119,11 @@ async def reject_order(
             "status": order.status,
             "order": order.model_dump(mode='json'),
             "driver_phone": driver.phone,
+            "stop_points": stop_points_service.get_stop_points(order_id)
         }))
 
         # Перераспределяем заказ
-        asyncio.create_task(distributor.redistribute_order(order, order_service, data.driver_id))
+        asyncio.create_task(distributor.redistribute_order(order, order_service, data.driver_id, stop_points_service))
 
         return {"message": "Order rejected", "order_id": order_id}
     except ValueError as e:
@@ -131,7 +136,8 @@ async def complete_order(
         data: OrderComplete,
         order_service: OrderService = Depends(),
         driver_service: DriverService = Depends(),
-        settings_service: SettingsService = Depends()
+        settings_service: SettingsService = Depends(),
+        stop_points_service: StopPointsService = Depends()
 ):
     try:
         order = order_service.complete_order(order_id, data.driver_id)
@@ -152,6 +158,7 @@ async def complete_order(
             "status": order.status,
             "order": order.model_dump(mode='json'),
             "driver_phone": driver.phone,
+            "stop_points": stop_points_service.get_stop_points(order_id)
         }))
 
         # Уведомляем водителя
@@ -171,7 +178,8 @@ async def cancel_order(
         order_id: int,
         order_service: OrderService = Depends(),
         driver_service: DriverService = Depends(),
-        settings_service: SettingsService = Depends()
+        settings_service: SettingsService = Depends(),
+        stop_points_service: StopPointsService = Depends()
 ):
     order = order_service.get_order(order_id)
     driver = driver_service.get_driver(order.driver_id)
@@ -200,6 +208,7 @@ async def cancel_order(
             "status": order.status,
             "order": order.model_dump(mode='json'),
             "driver_phone": driver.phone,
+            "stop_points": stop_points_service.get_stop_points(order_id)
         }))
 
         # Уведомляем водителей (если заказ был в статусе PENDING)
@@ -221,7 +230,8 @@ async def set_order_price(
         data: OrderPrice,
         order_service: OrderService = Depends(),
         settings_service: SettingsService = Depends(),
-        driver_service: DriverService = Depends()
+        driver_service: DriverService = Depends(),
+        stop_points_service: StopPointsService = Depends()
 ):
     order = order_service.get_order(order_id)
     driver = driver_service.get_driver(order.driver_id)
@@ -251,6 +261,7 @@ async def set_order_price(
             "status": order.status,
             "order": order.model_dump(mode='json'),
             "driver_phone": driver.phone,
+            "stop_points": stop_points_service.get_stop_points(order_id)
         })
 
         # Уведомляем водителя

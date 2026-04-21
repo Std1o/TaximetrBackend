@@ -4,6 +4,7 @@ import json
 from taximetr.model.schemas import DriverUpdateLocation
 from taximetr.service.driver_service import DriverService
 from taximetr.service.order_service import OrderService
+from taximetr.service.stop_points import StopPointsService
 from taximetr.service.websocket_manager import manager
 
 router = APIRouter(tags=["websocket"])
@@ -12,7 +13,8 @@ router = APIRouter(tags=["websocket"])
 # Вебсокет для отслеживания конкретного заказа (водитель и клиент)
 @router.websocket("/ws/order/{order_id}")
 async def websocket_order(websocket: WebSocket, order_id: int, order_service: OrderService = Depends(),
-                          driver_service: DriverService = Depends()):
+                          driver_service: DriverService = Depends(),
+                          stop_points_service: StopPointsService = Depends()):
     await websocket.accept()
 
     try:
@@ -49,7 +51,8 @@ async def websocket_order(websocket: WebSocket, order_id: int, order_service: Or
             "status": order.status,
             "order": order.model_dump(mode='json'),
             "driver_phone": driver.phone if driver else None,
-            "driver_name": driver.name if driver else None
+            "driver_name": driver.name if driver else None,
+            "stop_points": stop_points_service.get_stop_points(order_id)
         })
 
         # Обработка сообщений
@@ -81,7 +84,8 @@ async def websocket_order(websocket: WebSocket, order_id: int, order_service: Or
                         "status": new_status,
                         "order": order.model_dump(mode='json'),
                         "driver_phone": driver.phone if driver else None,
-                        "driver_name": driver.name if driver else None
+                        "driver_name": driver.name if driver else None,
+                        "stop_points": stop_points_service.get_stop_points(order_id)
                     })
 
     except WebSocketDisconnect:

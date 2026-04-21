@@ -188,3 +188,6 @@ class StopPoint(BaseModel):
     order_id: int
     address: str
     was_stopped: bool
+
+    class Config:
+        from_attributes = True

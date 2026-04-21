@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 import asyncio
 
+from taximetr.service.stop_points import StopPointsService
 from taximetr.service.websocket_manager import manager
 from taximetr.service.auth import get_current_user
 from taximetr.tables import User, Driver
@@ -81,7 +82,8 @@ async def notify_order_client(
         body: str,
         current_user: User = Depends(get_current_user),
         order_service: OrderService = Depends(),
-        driver_service: DriverService = Depends()
+        driver_service: DriverService = Depends(),
+        stop_points_service: StopPointsService = Depends()
 ):
     """Отправить уведомление клиенту конкретного заказа"""
 
@@ -99,6 +101,7 @@ async def notify_order_client(
         "status": order.status,
         "order": order.model_dump(mode='json'),
         "driver_phone": driver.phone if driver else  None,
+        "stop_points": stop_points_service.get_stop_points(order_id)
     })
 
     return {"message": f"Notification sent to client of order {order_id}"}

@@ -5,6 +5,7 @@ from taximetr.model.schemas import DriverResponse, DriverCreate, DriverUpdateLoc
 from taximetr.service.auth import get_current_user, AuthService
 from taximetr.service.driver_service import DriverService
 from taximetr.service.order_service import OrderService
+from taximetr.service.stop_points import StopPointsService
 from taximetr.service.websocket_manager import manager
 from taximetr.tables import User
 
@@ -40,7 +41,8 @@ async def update_location(
         driver_id: int,
         location: DriverUpdateLocation,
         driver_service: DriverService = Depends(),
-        order_service: OrderService = Depends()
+        order_service: OrderService = Depends(),
+        stop_points_service: StopPointsService = Depends()
 ):
     driver = driver_service.update_location(driver_id, location)
     order = order_service.get_order(driver.current_order_id)
@@ -62,6 +64,7 @@ async def update_location(
                 "status": order.status,
                 "order": order.model_dump(mode='json'),
                 "driver_phone": driver.phone,
+                "stop_points": stop_points_service.get_stop_points(order.id)
             }
         )
 

@@ -6,6 +6,7 @@ from taximetr.model.enums import DistributionAlgorithm, OrderStatus
 from taximetr.service.driver_service import DriverService
 from taximetr.service.order_service import OrderService
 from taximetr.service.settings_service import SettingsService
+from taximetr.service.stop_points import StopPointsService
 from taximetr.service.websocket_manager import manager
 from taximetr.tables import Driver, Order
 import asyncio
@@ -67,7 +68,8 @@ class OrderDistributor:
             )
         )
 
-    async def redistribute_order(self, order: Order, order_service: OrderService, rejected_driver_id: int):
+    async def redistribute_order(self, order: Order, order_service: OrderService, rejected_driver_id: int,
+                                 stop_points_service: StopPointsService):
         # Добавляем водителя в список отказавшихся
         if order.id not in self.rejected_orders:
             self.rejected_orders[order.id] = []
@@ -80,12 +82,12 @@ class OrderDistributor:
         rejected_drivers = self.rejected_orders.get(order.id, [])
 
         if not online_drivers:
-            await self.cancel_order(order, order_service, "Нет свободных водителей")
+            await self.cancel_order(order, order_service,  stop_points_service, "Нет свободных водителей")
             return
 
         available_drivers = [d for d in online_drivers if d.id not in rejected_drivers]
         if not available_drivers:
-            await self.cancel_order(order, order_service, "Все водители отказались от заказа")
+            await self.cancel_order(order, order_service, stop_points_service, "Все водители отказались от заказа")
             return
 
         algorithm = settings_service.get_algorithm(order.settings_id)
@@ -115,7 +117,7 @@ class OrderDistributor:
                 "previous_driver_rejected": True
             })
         else:
-            await self.cancel_order(order, order_service, "Не удалось найти водителя")
+            await self.cancel_order(order, order_service, stop_points_service, "Не удалось найти водителя")
 
     async def distribute_order(self, order: Order, db: Session):
         driver_service = DriverService(db)
@@ -182,9 +184,10 @@ class OrderDistributor:
                 })
                 # Водитель не ответил
                 order_service = OrderService(db)
+                stop_points_service = StopPointsService(db)
                 order = order_service.get_table_order(order_id)
                 if order and order.status == OrderStatus.PENDING.value:
-                    await self.redistribute_order(order, order_service, driver_id)
+                    await self.redistribute_order(order, order_service, driver_id, stop_points_service)
                 del self.pending_orders[order_id]
 
     def resolve_order(self, order_id: int, driver_id: int):
@@ -195,7 +198,8 @@ class OrderDistributor:
 
     async def cancel_order(self, order: Order,
                            order_service: OrderService,
-                           reason: str = "Все водители отказались от заказа"):
+                           stop_points_service: StopPointsService,
+                           reason: str = "Все водители отказались от заказа",):
         """Отмена заказа"""
         order_service.cancel_order(order.id)
         order = order_service.get_order(order.id)
@@ -205,7 +209,8 @@ class OrderDistributor:
             "order_id": order.id,
             "reason": reason,
             "status": order.status,
-            "order": order.model_dump(mode='json')
+            "order": order.model_dump(mode='json'),
+            "stop_points": stop_points_service.get_stop_points(order.id)
         })
 
         if order.id in self.rejected_orders:
