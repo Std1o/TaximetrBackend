@@ -126,3 +126,10 @@ class Premium(Base):
     settings_id = sa.Column(sa.Integer, sa.ForeignKey(Settings.id), primary_key=True)
     sum = sa.Column(sa.Integer, nullable=False)
     card = sa.Column(sa.String, nullable=False)
+
+class StopPoints(Base):
+    __tablename__ = 'stop_points'
+    id = sa.Column(sa.Integer, primary_key=True)
+    order_id = sa.Column(sa.Integer, sa.ForeignKey(Order.id))
+    address = sa.Column(sa.Text)
+    was_stopped = sa.Column(sa.Boolean, default=False)

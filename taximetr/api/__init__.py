@@ -11,6 +11,7 @@ from .images import router as images_router
 from .drivers_tickets import router as drivers_tickets_router
 from .tickets import router as tickets_router
 from .premium import router as premium_router
+from .stop_points import router as stop_points_router
 
 router = APIRouter()
 router.include_router(auth_router)
@@ -25,3 +26,4 @@ router.include_router(images_router)
 router.include_router(drivers_tickets_router)
 router.include_router(tickets_router)
 router.include_router(premium_router)
+router.include_router(stop_points_router)

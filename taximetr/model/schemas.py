@@ -178,3 +178,13 @@ class Ticket(BaseModel):
 
     class Config:
         from_attributes = True
+
+class StopPointCreate(BaseModel):
+    order_id: int
+    address: str
+
+class StopPoint(BaseModel):
+    id: int
+    order_id: int
+    address: str
+    was_stopped: bool
