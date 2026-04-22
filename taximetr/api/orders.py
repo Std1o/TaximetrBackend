@@ -81,7 +81,7 @@ async def accept_order(
             "order_id": order.id,
             "status": order.status,
             "order": order.model_dump(mode='json'),
-            "stop_points": stop_points_service.get_stop_points(order_id)
+            "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
         }))
 
         return {"message": "Order accepted", "order_id": order_id}
@@ -119,7 +119,7 @@ async def reject_order(
             "status": order.status,
             "order": order.model_dump(mode='json'),
             "driver_phone": driver.phone,
-            "stop_points": stop_points_service.get_stop_points(order_id)
+            "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
         }))
 
         # Перераспределяем заказ
@@ -158,7 +158,7 @@ async def complete_order(
             "status": order.status,
             "order": order.model_dump(mode='json'),
             "driver_phone": driver.phone,
-            "stop_points": stop_points_service.get_stop_points(order_id)
+            "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
         }))
 
         # Уведомляем водителя
@@ -208,7 +208,7 @@ async def cancel_order(
             "status": order.status,
             "order": order.model_dump(mode='json'),
             "driver_phone": driver.phone,
-            "stop_points": stop_points_service.get_stop_points(order_id)
+            "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
         }))
 
         # Уведомляем водителей (если заказ был в статусе PENDING)
@@ -261,7 +261,7 @@ async def set_order_price(
             "status": order.status,
             "order": order.model_dump(mode='json'),
             "driver_phone": driver.phone,
-            "stop_points": stop_points_service.get_stop_points(order_id)
+            "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
         })
 
         # Уведомляем водителя

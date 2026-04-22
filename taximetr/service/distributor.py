@@ -210,7 +210,7 @@ class OrderDistributor:
             "reason": reason,
             "status": order.status,
             "order": order.model_dump(mode='json'),
-            "stop_points": stop_points_service.get_stop_points(order.id)
+            "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order.id)]
         })
 
         if order.id in self.rejected_orders:

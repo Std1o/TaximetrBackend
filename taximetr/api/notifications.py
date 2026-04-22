@@ -101,7 +101,7 @@ async def notify_order_client(
         "status": order.status,
         "order": order.model_dump(mode='json'),
         "driver_phone": driver.phone if driver else  None,
-        "stop_points": stop_points_service.get_stop_points(order_id)
+        "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
     })
 
     return {"message": f"Notification sent to client of order {order_id}"}

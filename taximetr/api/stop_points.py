@@ -28,7 +28,7 @@ async def create_stop_point(
         "order": order.model_dump(mode='json'),
         "driver_phone": driver.phone if driver else None,
         "driver_name": driver.name if driver else None,
-        "stop_points": service.get_stop_points(stop_point.order_id)
+        "stop_points": [sp.model_dump(mode='json') for sp in service.get_stop_points(order.id)]
     })
 
 

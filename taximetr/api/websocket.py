@@ -52,7 +52,7 @@ async def websocket_order(websocket: WebSocket, order_id: int, order_service: Or
             "order": order.model_dump(mode='json'),
             "driver_phone": driver.phone if driver else None,
             "driver_name": driver.name if driver else None,
-            "stop_points": stop_points_service.get_stop_points(order_id)
+            "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
         })
 
         # Обработка сообщений
@@ -85,7 +85,7 @@ async def websocket_order(websocket: WebSocket, order_id: int, order_service: Or
                         "order": order.model_dump(mode='json'),
                         "driver_phone": driver.phone if driver else None,
                         "driver_name": driver.name if driver else None,
-                        "stop_points": stop_points_service.get_stop_points(order_id)
+                        "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
                     })
 
     except WebSocketDisconnect:
