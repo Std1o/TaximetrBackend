@@ -28,7 +28,8 @@ class StopPointsService:
         return self.session.query(tables.StopPoints).filter(tables.StopPoints.id == stop_point_id).first()
 
     def get_stop_points(self, order_id: int) -> List[StopPoint]:
-        return self.session.query(tables.StopPoints).filter(tables.StopPoints.order_id == order_id).all()
+        orm_objects = self.session.query(tables.StopPoints).filter(tables.StopPoints.order_id == order_id).all()
+        return [StopPoint.model_validate(obj) for obj in orm_objects]
 
     def delete_stop_point(self, stop_point_id: int):
         stop_point = self.get_stop_point(stop_point_id)
