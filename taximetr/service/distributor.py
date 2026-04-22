@@ -128,9 +128,9 @@ class OrderDistributor:
         online_drivers = driver_service.get_online_drivers(order.settings_id)
         factor = settings_service.get_settings(order.settings_id).factor
 
-        # ✅ Проверка на отсутствие водителей
+        # ✅ Если нет водителей - запускаем таймаут на 10 секунд
         if not online_drivers:
-            await self.cancel_order(order, order_service, stop_points_service, "Нет свободных водителей")
+            asyncio.create_task(self._cancel_after_timeout(order, db, 10))
             return
 
         algorithm = settings_service.get_algorithm(order.settings_id)
@@ -179,6 +179,21 @@ class OrderDistributor:
         else:
             # ✅ Если водитель не найден (хотя online_drivers не пуст)
             await self.cancel_order(order, order_service, stop_points_service, "Не удалось назначить водителя")
+
+    async def _cancel_after_timeout(self, order: Order, db: Session, delay: int):
+        await asyncio.sleep(delay)
+
+        # Проверяем, не появился ли водитель за это время
+        driver_service = DriverService(db)
+        online_drivers = driver_service.get_online_drivers(order.settings_id)
+
+        if not online_drivers:
+            order_service = OrderService(db)
+            stop_points_service = StopPointsService(db)
+            await self.cancel_order(order, order_service, stop_points_service, "Нет свободных водителей")
+        else:
+            # Водитель появился - распределяем
+            await self.distribute_order(order, db)
 
     async def _check_timeout(self, order_id: int, db: Session, driver_id: int):
         """Проверка таймаута через 10 секунд"""
