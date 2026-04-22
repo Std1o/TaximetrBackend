@@ -23,7 +23,7 @@ async def create_stop_point(
     driver = driver_service.get_driver(order.driver_id)
     service.create(stop_point)
     await manager.send_to_order(stop_point.order_id, {
-        "type": "status_changed",
+        "type": "stop_point_created",
         "status": order.status,
         "order": order.model_dump(mode='json'),
         "driver_phone": driver.phone if driver else None,
@@ -38,5 +38,18 @@ def get_stop_points(order_id: int, service: StopPointsService = Depends()):
 
 
 @router.delete("/{stop_point_id}")
-def delete_stop_point(stop_point_id: int, service: StopPointsService = Depends()):
+async def delete_stop_point(stop_point_id: int, order_id: int, service: StopPointsService = Depends(),
+                            order_service: OrderService = Depends(),
+                            driver_service: DriverService = Depends()
+                            ):
+    order = order_service.get_order(order_id)
+    driver = driver_service.get_driver(order.driver_id)
     service.delete_stop_point(stop_point_id)
+    await manager.send_to_order(order_id, {
+        "type": "stop_point_deleted",
+        "status": order.status,
+        "order": order.model_dump(mode='json'),
+        "driver_phone": driver.phone if driver else None,
+        "driver_name": driver.name if driver else None,
+        "stop_points": [sp.model_dump(mode='json') for sp in service.get_stop_points(order.id)]
+    })
