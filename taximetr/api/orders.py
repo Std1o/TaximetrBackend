@@ -71,7 +71,7 @@ async def accept_order(
         }, factor=factor, settings_id=order.settings_id))
 
         # Уведомляем клиента через вебсокет заказа
-        manager.send_to_order(order_id, {
+        await manager.send_to_order(order_id, {
             "type": "order_accepted",
             "driver_id": data.driver_id,
             "driver_name": driver.name,
