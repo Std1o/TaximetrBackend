@@ -16,7 +16,8 @@ def main():
     uvicorn.run('taximetr.app:app',
                 host=settings.server_host,
                 port=settings.server_port,
-                reload=True)
+                reload=True,
+                log_level="debug")
 
 if __name__ == "__main__":
     main()
