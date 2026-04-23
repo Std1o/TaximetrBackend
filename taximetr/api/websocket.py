@@ -46,21 +46,6 @@ async def websocket_order(websocket: WebSocket, order_id: int, order_service: Or
             return
 
         # Для водителя проверяем, что он назначен на этот заказ
-        if role == "driver":
-            # Проверяем, назначен ли водитель
-            if order.driver_id is None:
-                debug_print(f"❌ Order {order_id} has no driver assigned yet")
-                await websocket.close(code=1008, reason="Driver not assigned to this order yet")
-                return
-
-            if order.driver_id != user_id:
-                debug_print(f"❌ Driver {user_id} not assigned to order {order_id} (assigned driver: {order.driver_id})")
-                await websocket.close(code=1008, reason="Driver not assigned to this order")
-                return
-
-            debug_print(f"✅ Driver {user_id} verified for order {order_id}")
-
-        # Получаем информацию о водителе (если назначен)
         driver = None
         driver_phone = None
         driver_name = None
@@ -69,6 +54,21 @@ async def websocket_order(websocket: WebSocket, order_id: int, order_service: Or
             if driver:
                 driver_phone = driver.phone
                 driver_name = driver.name
+        if role == "driver":
+            # Проверяем, назначен ли водитель
+            if order.driver_id is None:
+                debug_print(f"❌ Order {order_id} has no driver assigned yet")
+                await websocket.close(code=1008, reason="Driver not assigned to this order yet")
+                return
+
+            if order.driver_id != driver.id:
+                debug_print(f"❌ Driver {driver.id} not assigned to order {order_id} (assigned driver: {order.driver_id})")
+                await websocket.close(code=1008, reason="Driver not assigned to this order")
+                return
+
+            debug_print(f"✅ Driver {driver.id} verified for order {order_id}")
+
+        # Получаем информацию о водителе (если назначен)
 
         # Подключаем к заказу
         await manager.connect_to_order(websocket, order_id, role)
