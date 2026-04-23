@@ -1,5 +1,10 @@
 from fastapi import WebSocket
 from typing import Dict, Any
+import logging
+
+# Настройка логгера
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class ConnectionManager:
@@ -12,15 +17,20 @@ class ConnectionManager:
 
     # Методы для работы с заказами
     async def connect_to_order(self, websocket: WebSocket, order_id: int, role: str):
-        """Подключение к заказу (водитель или клиент)"""
+        logger.info(f"🔌 connect_to_order: order_id={order_id}, role={role}")
+        logger.debug(f"Current order_connections before: {list(self.order_connections.keys())}")
 
         if order_id not in self.order_connections:
             self.order_connections[order_id] = {}
+            logger.info(f"Created new entry for order_id={order_id}")
 
         self.order_connections[order_id][role] = {
             "websocket": websocket,
             "role": role
         }
+
+        logger.info(f"Roles for order_id={order_id}: {list(self.order_connections[order_id].keys())}")
+        logger.debug(f"Current order_connections after: {self.order_connections}")
 
     def disconnect_from_order(self, websocket: WebSocket):
         """Отключение от заказа"""
@@ -33,13 +43,21 @@ class ConnectionManager:
                     return
 
     async def send_to_order(self, order_id: int, data: dict):
-        """Отправить сообщение всем участникам заказа"""
+        logger.info(f"📤 send_to_order: order_id={order_id}, type={data.get('type')}")
+        logger.debug(f"order_connections keys: {list(self.order_connections.keys())}")
+
         if order_id in self.order_connections:
+            roles = list(self.order_connections[order_id].keys())
+            logger.info(f"Roles for order_id={order_id}: {roles}")
+
             for role, conn in self.order_connections[order_id].items():
                 try:
                     await conn["websocket"].send_json(data)
-                except:
-                    pass
+                    logger.info(f"✅ Sent to {role}")
+                except Exception as e:
+                    logger.error(f"❌ Error sending to {role}: {e}")
+        else:
+            logger.warning(f"❌ order_id {order_id} NOT FOUND in order_connections")
 
     async def send_to_role_in_order(self, order_id: int, role: str, data: dict):
         """Отправить сообщение конкретному участнику заказа (водитель или клиент)"""
