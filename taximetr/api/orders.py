@@ -71,7 +71,7 @@ async def accept_order(
         }, factor=factor, settings_id=order.settings_id))
 
         # Уведомляем клиента через вебсокет заказа
-        asyncio.create_task(manager.send_to_order(order_id, {
+        manager.send_to_order(order_id, {
             "type": "order_accepted",
             "driver_id": data.driver_id,
             "driver_name": driver.name,
@@ -82,7 +82,7 @@ async def accept_order(
             "status": order.status,
             "order": order.model_dump(mode='json'),
             "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
-        }))
+        })
 
         return {"message": "Order accepted", "order_id": order_id}
     except ValueError as e:
