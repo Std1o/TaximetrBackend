@@ -2,10 +2,7 @@ from fastapi import WebSocket
 from typing import Dict, Any
 import logging
 
-# Настройка логгера
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
 
 class ConnectionManager:
     def __init__(self):
