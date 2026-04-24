@@ -24,8 +24,8 @@ def create_driver(
 
 
 @router.get("/", response_model=List[DriverResponse])
-def get_drivers(service: DriverService = Depends()):
-    return service.get_all_drivers()
+def get_drivers(settings_id: int, service: DriverService = Depends()):
+    return service.get_all_drivers(settings_id)
 
 
 @router.get("/{user_id}", response_model=DriverResponse)

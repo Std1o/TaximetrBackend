@@ -64,8 +64,8 @@ class DriverService:
             Driver.settings_id == settings_id
         ).all()
 
-    def get_all_drivers(self) -> List[Driver]:
-        return self.session.query(Driver).all()
+    def get_all_drivers(self, settings_id) -> List[Driver]:
+        return self.session.query(Driver).filter_by(settings_id=settings_id).all()
 
     def get_driver(self, driver_id: int) -> Optional[Driver]:
         return self.session.query(Driver).filter(Driver.id == driver_id).first()
