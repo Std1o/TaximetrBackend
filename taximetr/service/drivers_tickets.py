@@ -49,9 +49,9 @@ class TicketService:
 
     async def give_premium(self, phone: str):
         user = await self.get_user_by_phone(phone)
-        user.premium = datetime.now() + relativedelta(day=1)
+        user.premium = datetime.now() + timedelta(days=1)
         debug_print(f"now: {datetime.now()}")
-        debug_print(f"result: {datetime.now() + relativedelta(day=1)}")
+        debug_print(f"result: {datetime.now() + timedelta(days=1)}")
         self.session.commit()
         ticket = await self.get_ticket_by_phone(phone)
         self.session.delete(ticket)
