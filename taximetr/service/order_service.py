@@ -21,8 +21,8 @@ class OrderService:
         self.db.refresh(order)
         return order
 
-    def get_all_orders(self) -> List[Order]:
-        return self.db.query(Order).order_by(Order.created_at.desc()).all()
+    def get_all_orders(self, settings_id: int) -> List[Order]:
+        return self.db.query(Order).filter_by(settings_id=settings_id).order_by(Order.created_at.desc()).all()
 
     def get_table_order(self, order_id: int) -> Optional[Order]:
         return self.db.query(Order).filter(Order.id == order_id).first()

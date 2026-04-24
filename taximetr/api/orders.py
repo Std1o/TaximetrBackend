@@ -26,8 +26,8 @@ async def create_order(
 
 
 @router.get("/", response_model=List[OrderResponse])
-def get_orders(service: OrderService = Depends()):
-    return service.get_all_orders()
+def get_orders(settings_id: int, service: OrderService = Depends()):
+    return service.get_all_orders(settings_id)
 
 
 @router.get("/{order_id}", response_model=OrderResponse)
