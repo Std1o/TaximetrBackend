@@ -62,7 +62,8 @@ async def websocket_order(websocket: WebSocket, order_id: int, order_service: Or
                 return
 
             if order.driver_id != driver.id:
-                debug_print(f"❌ Driver {driver.id} not assigned to order {order_id} (assigned driver: {order.driver_id})")
+                debug_print(
+                    f"❌ Driver {driver.id} not assigned to order {order_id} (assigned driver: {order.driver_id})")
                 await websocket.close(code=1008, reason="Driver not assigned to this order")
                 return
 
@@ -201,3 +202,80 @@ async def websocket_client(
     except WebSocketDisconnect:
         debug_print(f"🔌 Client {client_id} broadcast disconnected")
         manager.disconnect_client(client_id)
+
+
+# НОВЫЙ ВЕБСОКЕТ ДЛЯ ПРОСМОТРА ОЧЕРЕДИ
+@router.websocket("/ws/queue/{settings_id}")
+async def websocket_queue(
+        websocket: WebSocket,
+        settings_id: int,
+        driver_service: DriverService = Depends()
+):
+    """Вебсокет для просмотра очереди водителей"""
+    debug_print(f"📊 New queue connection for settings {settings_id}")
+
+    # Подключаем к менеджеру
+    await manager.connect_queue(websocket, settings_id)
+
+    # Отправляем текущее состояние очереди сразу после подключения
+    await send_queue_status(websocket, settings_id, driver_service)
+
+    try:
+        while True:
+            data = await websocket.receive_json()
+            msg_type = data.get("type")
+
+            if msg_type == "get_queue":
+                await send_queue_status(websocket, settings_id, driver_service)
+
+    except WebSocketDisconnect:
+        debug_print(f"📊 Queue connection closed for settings {settings_id}")
+        manager.disconnect_queue(websocket)
+    except Exception as e:
+        debug_print(f"❌ Error in queue websocket: {e}")
+        manager.disconnect_queue(websocket)
+
+
+async def send_queue_status(websocket: WebSocket, settings_id: int, driver_service: DriverService):
+    """Отправить текущее состояние очереди"""
+    from taximetr.service.distributor import distributor
+
+    # Получаем всех онлайн водителей
+    online_drivers = driver_service.get_online_drivers(settings_id)
+
+    # Сортируем по ID
+    sorted_drivers = sorted(online_drivers, key=lambda d: d.id)
+    driver_ids = [d.id for d in sorted_drivers]
+    key = tuple(driver_ids)
+
+    # Получаем текущий индекс из дистрибьютора
+    current_index = distributor.round_robin_index.get(key, 0)
+    total = len(sorted_drivers)
+
+    # Формируем очередь
+    queue_data = []
+    for i, driver in enumerate(sorted_drivers):
+        if total > 0:
+            position = (i - current_index) % total
+        else:
+            position = -1
+
+        queue_data.append({
+            "driver_id": driver.id,
+            "driver_name": driver.name,
+            "driver_phone": driver.phone,
+            "position": position,
+            "is_current": position == 0,
+            "is_next": position == 1,
+        })
+
+    # Отправляем данные
+    await websocket.send_json({
+        "type": "queue_status",
+        "settings_id": settings_id,
+        "queue": queue_data,
+        "total_drivers": total,
+        "current_index": current_index,
+        "algorithm": "round_robin",
+        "timestamp": __import__('datetime').datetime.now().isoformat()
+    })

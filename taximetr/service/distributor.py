@@ -2,6 +2,7 @@ import math
 from typing import List, Optional
 from sqlalchemy.orm import Session
 
+from taximetr.database import get_session
 from taximetr.model.enums import DistributionAlgorithm, OrderStatus
 from taximetr.service.driver_service import DriverService
 from taximetr.service.order_service import OrderService
@@ -20,6 +21,51 @@ class OrderDistributor:
 
     def calculate_distance(self, lat1: float, lng1: float, lat2: float, lng2: float) -> float:
         return math.sqrt((lat1 - lat2) ** 2 + (lng1 - lng2) ** 2)
+
+    # НОВЫЙ МЕТОД
+    def _broadcast_queue_update(self, settings_id: int):
+        """Отправить обновление очереди всем подключенным клиентам"""
+        import asyncio
+        from taximetr.service.driver_service import DriverService
+
+        async def broadcast():
+            db = get_session()
+            try:
+                driver_service = DriverService(db)
+                online_drivers = driver_service.get_online_drivers(settings_id)
+
+                sorted_drivers = sorted(online_drivers, key=lambda d: d.id)
+                driver_ids = [d.id for d in sorted_drivers]
+                key = tuple(driver_ids)
+                current_index = self.round_robin_index.get(key, 0)
+                total = len(sorted_drivers)
+
+                queue_data = []
+                for i, driver in enumerate(sorted_drivers):
+                    if total > 0:
+                        position = (i - current_index) % total
+                    else:
+                        position = -1
+
+                    queue_data.append({
+                        "driver_id": driver.id,
+                        "driver_name": driver.name,
+                        "position": position,
+                        "is_current": position == 0,
+                    })
+
+                await manager.broadcast_queue_update(settings_id, {
+                    "type": "queue_updated",
+                    "settings_id": settings_id,
+                    "queue": queue_data,
+                    "current_index": current_index,
+                    "total_drivers": total,
+                    "timestamp": __import__('datetime').datetime.now().isoformat()
+                })
+            finally:
+                db.close()
+
+        asyncio.create_task(broadcast())
 
     def get_next_driver_round_robin(self, online_drivers: List[Driver],
                                     rejected_drivers: List[int] = None) -> Optional[Driver]:
@@ -44,6 +90,10 @@ class OrderDistributor:
         index = self.round_robin_index[key]
         driver = available_drivers[index % len(available_drivers)]
         self.round_robin_index[key] = (index + 1) % len(available_drivers)
+
+        # 👇 ДОБАВЛЕН ВЫЗОВ
+        if available_drivers:
+            self._broadcast_queue_update(available_drivers[0].settings_id)
 
         return driver
 
@@ -82,7 +132,7 @@ class OrderDistributor:
         rejected_drivers = self.rejected_orders.get(order.id, [])
 
         if not online_drivers:
-            await self.cancel_order(order, order_service,  stop_points_service, "Нет свободных водителей")
+            await self.cancel_order(order, order_service, stop_points_service, "Нет свободных водителей")
             return
 
         available_drivers = [d for d in online_drivers if d.id not in rejected_drivers]
@@ -116,6 +166,8 @@ class OrderDistributor:
                 "algorithm": algorithm.value,
                 "previous_driver_rejected": True
             })
+            # 👇 ДОБАВЛЕН ВЫЗОВ
+            self._broadcast_queue_update(order.settings_id)
         else:
             await self.cancel_order(order, order_service, stop_points_service, "Не удалось найти водителя")
 
@@ -174,6 +226,9 @@ class OrderDistributor:
                         "taken_by": driver.name
                     }, factor=factor)
 
+            # 👇 ДОБАВЛЕН ВЫЗОВ
+            self._broadcast_queue_update(order.settings_id)
+
             # Запускаем проверку таймаута
             asyncio.create_task(self._check_timeout(order.id, db, driver.id))
         else:
@@ -212,6 +267,8 @@ class OrderDistributor:
                 stop_points_service = StopPointsService(db)
                 order = order_service.get_table_order(order_id)
                 if order and order.status == OrderStatus.PENDING.value:
+                    # 👇 ДОБАВЛЕН ВЫЗОВ
+                    self._broadcast_queue_update(order.settings_id)
                     await self.redistribute_order(order, order_service, driver_id, stop_points_service)
                 del self.pending_orders[order_id]
 
@@ -220,11 +277,22 @@ class OrderDistributor:
         if order_id in self.pending_orders:
             self.pending_orders[order_id]["resolved"] = True
             del self.pending_orders[order_id]
+            # 👇 ДОБАВЛЕН ВЫЗОВ (нужно получить settings_id)
+            from taximetr.service.order_service import OrderService
+            from taximetr.tables import SessionLocal
+            db = SessionLocal()
+            try:
+                order_service = OrderService(db)
+                order = order_service.get_table_order(order_id)
+                if order:
+                    self._broadcast_queue_update(order.settings_id)
+            finally:
+                db.close()
 
     async def cancel_order(self, order: Order,
                            order_service: OrderService,
                            stop_points_service: StopPointsService,
-                           reason: str = "Все водители отказались от заказа",):
+                           reason: str = "Все водители отказались от заказа", ):
         """Отмена заказа"""
         order_service.cancel_order(order.id)
         order = order_service.get_order(order.id)
@@ -240,6 +308,9 @@ class OrderDistributor:
 
         if order.id in self.rejected_orders:
             del self.rejected_orders[order.id]
+
+        # 👇 ДОБАВЛЕН ВЫЗОВ
+        self._broadcast_queue_update(order.settings_id)
 
 
 distributor = OrderDistributor()

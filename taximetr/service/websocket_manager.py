@@ -1,10 +1,12 @@
 from fastapi import WebSocket
-from typing import Dict, Any
+from typing import Dict, Any, List
 import sys
+
 
 def debug_print(*args, **kwargs):
     """Принудительный вывод в stderr с немедленным сбросом буфера"""
     print(*args, **kwargs, file=sys.stderr, flush=True)
+
 
 class ConnectionManager:
     def __init__(self):
@@ -14,6 +16,8 @@ class ConnectionManager:
         # Храним соединения водителей для broadcast
         self.driver_connections: Dict[int, Any] = {}  # {driver_id: websocket}
         self.client_connections: Dict[int, Any] = {}
+        # НОВОЕ: Храним соединения для просмотра очереди
+        self.queue_connections: Dict[int, List[WebSocket]] = {}  # {settings_id: [websocket1, websocket2]}
 
     # Методы для работы с заказами
     async def connect_to_order(self, websocket: WebSocket, order_id: int, role: str):
@@ -148,6 +152,48 @@ class ConnectionManager:
                 except Exception as e:
                     debug_print(f"❌ Error broadcasting to client {client_id}: {e}")
         debug_print(f"✅ Broadcast sent to {count} clients")
+
+    # НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С ОЧЕРЕДЬЮ
+    async def connect_queue(self, websocket: WebSocket, settings_id: int):
+        """Подключение к просмотру очереди водителей"""
+        debug_print(f"📊 connect_queue: settings_id={settings_id}")
+        await websocket.accept()
+
+        if settings_id not in self.queue_connections:
+            self.queue_connections[settings_id] = []
+
+        self.queue_connections[settings_id].append(websocket)
+        debug_print(f"Queue connections for settings {settings_id}: {len(self.queue_connections[settings_id])}")
+
+    def disconnect_queue(self, websocket: WebSocket):
+        """Отключение от просмотра очереди"""
+        debug_print(f"📊 disconnect_queue called")
+        for settings_id, connections in list(self.queue_connections.items()):
+            if websocket in connections:
+                connections.remove(websocket)
+                debug_print(f"Removed queue connection from settings {settings_id}")
+                if not connections:
+                    del self.queue_connections[settings_id]
+                return
+
+    async def broadcast_queue_update(self, settings_id: int, data: dict):
+        """Отправить обновление очереди всем подключенным клиентам"""
+        debug_print(f"📊 broadcast_queue_update: settings_id={settings_id}, type={data.get('type')}")
+
+        if settings_id not in self.queue_connections:
+            debug_print(f"No queue connections for settings {settings_id}")
+            return
+
+        for websocket in self.queue_connections[settings_id][:]:
+            try:
+                await websocket.send_json(data)
+                debug_print(f"✅ Queue update sent")
+            except Exception as e:
+                debug_print(f"❌ Error sending queue update: {e}")
+                self.queue_connections[settings_id].remove(websocket)
+
+        if settings_id in self.queue_connections and not self.queue_connections[settings_id]:
+            del self.queue_connections[settings_id]
 
 
 debug_print("🚀 Creating ConnectionManager instance...")
