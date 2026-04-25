@@ -24,6 +24,8 @@ class OrderDistributor:
 
     # НОВЫЙ МЕТОД
     def _broadcast_queue_update(self, settings_id: int):
+        print(f"🔴 broadcast_queue_update: settings_id={settings_id}", flush=True)
+        print(f"🔴 queue_connections: {self.queue_connections}", flush=True)
         """Отправить обновление очереди всем подключенным клиентам"""
         import asyncio
         from taximetr.service.driver_service import DriverService

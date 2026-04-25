@@ -95,6 +95,7 @@ class DriverService:
     def set_online(self, driver_id: int) -> Optional[Driver]:
         driver = self.get_driver(driver_id)
         if driver:
+            print(f"🔴 set_online: вызываю _broadcast_queue_update для settings_id={driver.settings_id}", flush=True)
             driver.status = DriverStatus.ONLINE.value
             driver.current_order_id = None
             self.session.commit()
@@ -133,6 +134,7 @@ class DriverService:
 
     # 👇 НОВЫЙ МЕТОД ДЛЯ ОБНОВЛЕНИЯ ОЧЕРЕДИ
     def _broadcast_queue_update(self, settings_id: int):
+        print(f"🔴 _broadcast_queue_update ВЫЗВАН для settings_id={settings_id}", flush=True)
         """Отправить обновление очереди всем подключенным клиентам"""
         import asyncio
         from taximetr.service.distributor import distributor
