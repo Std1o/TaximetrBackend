@@ -6,6 +6,7 @@ from taximetr.database import get_session
 from taximetr.model.enums import DriverStatus
 from taximetr.model.schemas import DriverCreate, DriverUpdateLocation
 from taximetr.tables import Driver, Car
+from taximetr.service.websocket_manager import manager
 
 
 class DriverService:
@@ -98,6 +99,10 @@ class DriverService:
             driver.current_order_id = None
             self.session.commit()
             self.session.refresh(driver)
+
+            # 👇 ОБНОВЛЯЕМ ОЧЕРЕДЬ
+            self._broadcast_queue_update(driver.settings_id)
+
         return driver
 
     def set_offline(self, driver_id: int) -> Optional[Driver]:
@@ -107,6 +112,10 @@ class DriverService:
             driver.current_order_id = None
             self.session.commit()
             self.session.refresh(driver)
+
+            # 👇 ОБНОВЛЯЕМ ОЧЕРЕДЬ
+            self._broadcast_queue_update(driver.settings_id)
+
         return driver
 
     def delete_driver(self, driver_id: int):
@@ -121,3 +130,16 @@ class DriverService:
             Driver.is_approved == True,
             Driver.cars.any(Car.is_approved == True)  # Если связь настроена
         ).order_by(Driver.id).all()
+
+    # 👇 НОВЫЙ МЕТОД ДЛЯ ОБНОВЛЕНИЯ ОЧЕРЕДИ
+    def _broadcast_queue_update(self, settings_id: int):
+        """Отправить обновление очереди всем подключенным клиентам"""
+        import asyncio
+        from taximetr.service.distributor import distributor
+
+        async def broadcast():
+            # Используем метод из distributor для отправки обновления
+            if hasattr(distributor, '_broadcast_queue_update'):
+                distributor._broadcast_queue_update(settings_id)
+
+        asyncio.create_task(broadcast())
