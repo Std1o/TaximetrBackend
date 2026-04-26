@@ -30,7 +30,7 @@ class OrderDistributor:
         from taximetr.service.driver_service import DriverService
 
         async def broadcast():
-            db = get_session()
+            db = next(get_session())
             try:
                 driver_service = DriverService(db)
                 online_drivers = driver_service.get_online_drivers(settings_id)
