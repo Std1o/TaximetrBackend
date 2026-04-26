@@ -136,12 +136,5 @@ class DriverService:
     def _broadcast_queue_update(self, settings_id: int):
         print(f"🔴 _broadcast_queue_update ВЫЗВАН для settings_id={settings_id}", flush=True)
         """Отправить обновление очереди всем подключенным клиентам"""
-        import asyncio
         from taximetr.service.distributor import distributor
-
-        async def broadcast():
-            # Используем метод из distributor для отправки обновления
-            if hasattr(distributor, '_broadcast_queue_update'):
-                distributor._broadcast_queue_update(settings_id)
-
-        asyncio.create_task(broadcast())
+        distributor._broadcast_queue_update(settings_id)
