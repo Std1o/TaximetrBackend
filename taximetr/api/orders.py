@@ -130,6 +130,37 @@ async def reject_order(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.put("/{order_id}/update_status")
+async def update_status(
+        order_id: int,
+        status: str,
+        order_service: OrderService = Depends(),
+        driver_service: DriverService = Depends(),
+        stop_points_service: StopPointsService = Depends()
+):
+    try:
+        order = order_service.update_status(order_id, status)
+        order = order_service.get_order(order.id)
+        driver = driver_service.get_driver(order.driver_id)
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+
+        # Уведомляем клиента
+        asyncio.create_task(manager.send_to_order(order_id, {
+            "type": "status_changed",
+            "order_id": order_id,
+            "driver_name": driver.name if driver else None,
+            "status": order.status,
+            "order": order.model_dump(mode='json'),
+            "driver_phone": driver.phone if driver else  None,
+            "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
+        }))
+
+        return {"message": "Status changed", "order_id": order_id}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.put("/{order_id}/complete")
 async def complete_order(
         order_id: int,
@@ -243,7 +274,7 @@ async def set_order_price(
         raise HTTPException(status_code=403, detail="Driver not assigned to this order")
 
     # Проверяем, что заказ в статусе accepted или delivering
-    if order.status not in [OrderStatus.ACCEPTED.value, OrderStatus.DELIVERING.value]:
+    if order.status not in [OrderStatus.ACCEPTED.value, OrderStatus.WAITING.value, OrderStatus.DELIVERING.value]:
         raise HTTPException(status_code=400, detail="Order not in progress")
 
     try:

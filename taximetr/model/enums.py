@@ -4,6 +4,7 @@ class OrderStatus(str, Enum):
     PENDING = "pending"
     ACCEPTED = "accepted"
     REJECTED = "rejected"
+    WAITING = "waiting"
     DELIVERING = "delivering"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
