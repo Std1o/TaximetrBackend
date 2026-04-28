@@ -280,8 +280,7 @@ class OrderDistributor:
             del self.pending_orders[order_id]
             # 👇 ДОБАВЛЕН ВЫЗОВ (нужно получить settings_id)
             from taximetr.service.order_service import OrderService
-            from taximetr.tables import SessionLocal
-            db = SessionLocal()
+            db = next(get_session())
             try:
                 order_service = OrderService(db)
                 order = order_service.get_table_order(order_id)

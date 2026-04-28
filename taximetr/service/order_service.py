@@ -13,7 +13,7 @@ from taximetr.tables import Order
 
 def debug_print(*args, **kwargs):
     print(*args, **kwargs, file=sys.stderr, flush=True)
-    
+
 class OrderService:
 
     def __init__(self, db: Session = Depends(get_session)):
