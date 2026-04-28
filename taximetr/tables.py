@@ -44,6 +44,7 @@ class Driver(Base):
     current_order_id = sa.Column(sa.Integer, nullable=True)
     created_at = sa.Column(sa.DateTime, default=datetime.utcnow)
     settings_id = sa.Column(sa.Integer, sa.ForeignKey(Settings.id))
+    current_car_id = sa.Column(sa.Integer)
 
     # Связь с машинами
     cars = relationship("Car", backref="driver", cascade="all, delete-orphan")

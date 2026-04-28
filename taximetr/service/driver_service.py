@@ -31,6 +31,8 @@ class DriverService:
         for car_data in driver_data.cars:
             car = Car(driver_id=driver.id, **car_data.model_dump(), is_approved=False)
             self.session.add(car)
+            self.session.flush()
+            driver.current_car_id = car.id
         self.session.commit()
 
         return driver
