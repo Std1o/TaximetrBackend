@@ -23,3 +23,7 @@ def update_car(car_id: int, car: CarUpdate, service: CarService = Depends()):
 def delete_car(car_id: int, service: CarService = Depends()):
     service.delete_car(car_id)
     return {"message": "Car deleted"}
+
+@router.get("/", response_model=CarResponse)
+def get_car(car_id: int, service: CarService = Depends()):
+    return service.get_car(car_id)

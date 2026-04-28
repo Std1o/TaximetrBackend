@@ -18,6 +18,12 @@ class CarService:
             raise HTTPException(status_code=404, detail="Driver not found")
         return driver
 
+    def get_car(self, car_id: int) -> Car:
+        car = self.session.query(Car).filter(Car.id == car_id).first()
+        if not car:
+            raise HTTPException(status_code=404, detail="Car not found")
+        return car
+
     def add_car(self, driver_id: int, car_data: CarCreate) -> Car:
         # Проверяем, что водитель существует
         driver = self._get_driver(driver_id)
