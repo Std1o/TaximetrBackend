@@ -45,6 +45,7 @@ class DriverResponse(BaseModel):
     current_lng: float
     current_order_id: Optional[int]
     settings_id: int
+    current_car_id: int
     cars: List[CarResponse] = Field(default_factory=list)
 
     class Config:
