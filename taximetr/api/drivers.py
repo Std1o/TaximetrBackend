@@ -92,3 +92,8 @@ def delete_driver(driver_id: int, service: DriverService = Depends(), auth_servi
     driver = service.get_driver(driver_id)
     service.delete_driver(driver_id)
     auth_service.delete_user(driver.user_id)
+
+@router.put("/{driver_id}/set_current_car", response_model=DriverResponse)
+def set_current_car(driver_id: int, car_id: int, service: DriverService = Depends()):
+    driver = service.set_current_car(driver_id, car_id)
+    return driver

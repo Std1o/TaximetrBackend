@@ -140,3 +140,10 @@ class DriverService:
         """Отправить обновление очереди всем подключенным клиентам"""
         from taximetr.service.distributor import distributor
         distributor._broadcast_queue_update(settings_id)
+
+    def set_current_car(self, driver_id: int, car_id: int) -> Optional[Driver]:
+        driver = self.get_driver(driver_id)
+        driver.current_car_id = car_id
+        self.session.commit()
+        self.session.refresh(driver)
+        return driver
