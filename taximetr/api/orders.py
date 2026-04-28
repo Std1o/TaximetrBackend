@@ -139,7 +139,7 @@ async def update_status(
         stop_points_service: StopPointsService = Depends()
 ):
     try:
-        order = order_service.update_status(order_id, status)
+        order = order_service.update_status(order_id, status.lower())
         order = order_service.get_order(order.id)
         driver = driver_service.get_driver(order.driver_id)
         if not order:
