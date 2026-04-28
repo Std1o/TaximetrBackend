@@ -9,6 +9,9 @@ from taximetr.model.schemas import OrderCreate, OrderResponse
 from taximetr.tables import Order
 
 
+def debug_print(*args, **kwargs):
+    print(*args, **kwargs, file=sys.stderr, flush=True)
+
 class OrderService:
 
     def __init__(self, db: Session = Depends(get_session)):
@@ -37,7 +40,8 @@ class OrderService:
         order = self.get_table_order(order_id)
         if not order:
             return None
-
+        
+        debug_print(order.status)
         if order.status != OrderStatus.PENDING.value:
             raise ValueError(f"Order {order_id} is not pending")
 
