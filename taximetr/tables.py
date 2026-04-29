@@ -103,6 +103,10 @@ class Tariff(Base):
     is_active = sa.Column(sa.Boolean, default=True)
     distance_and_time = sa.Column(sa.Boolean, default=True)
     settings_id = sa.Column(sa.Integer, sa.ForeignKey(Settings.id))
+    baggage = sa.Column(sa.Integer)
+    stoppage = sa.Column(sa.Integer)
+    animal = sa.Column(sa.Integer)
+    child = sa.Column(sa.Integer)
 
 class DriversTickets(Base):
     __tablename__ = 'drivers_tickets'

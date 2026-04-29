@@ -141,6 +141,10 @@ class TariffCreate(BaseModel):
     is_active: bool = True
     distance_and_time: bool = True
     settings_id: int = -1
+    baggage: Optional[int] = None
+    stoppage: Optional[int] = None
+    animal: Optional[int] = None
+    child: Optional[int] = None
 
 
 class TariffResponse(BaseModel):
@@ -159,6 +163,10 @@ class TariffResponse(BaseModel):
     country_price_per_min: float
     is_active: bool
     distance_and_time: bool
+    baggage: Optional[int]
+    stoppage: Optional[int]
+    animal: Optional[int]
+    child: Optional[int]
 
     class Config:
         from_attributes = True
