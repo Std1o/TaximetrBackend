@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 import asyncio
 
+from taximetr.service.car_service import CarService
 from taximetr.service.stop_points import StopPointsService
 from taximetr.service.websocket_manager import manager
 from taximetr.service.auth import get_current_user
@@ -83,12 +84,14 @@ async def notify_order_client(
         current_user: User = Depends(get_current_user),
         order_service: OrderService = Depends(),
         driver_service: DriverService = Depends(),
-        stop_points_service: StopPointsService = Depends()
+        stop_points_service: StopPointsService = Depends(),
+        car_service: CarService = Depends()
 ):
     """Отправить уведомление клиенту конкретного заказа"""
 
     order = order_service.get_order(order_id)
     driver = driver_service.get_driver(order.driver_id)
+    car = car_service.get_car(driver.current_car_id) if driver else None
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
@@ -101,6 +104,7 @@ async def notify_order_client(
         "status": order.status,
         "order": order.model_dump(mode='json'),
         "driver_phone": driver.phone if driver else  None,
+        "license_plate": car.license_plate if car else None,
         "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
     })
 

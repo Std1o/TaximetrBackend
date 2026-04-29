@@ -4,6 +4,7 @@ import asyncio
 
 from taximetr.model.enums import OrderStatus
 from taximetr.model.schemas import OrderCreate, OrderResponse, OrderAccept, OrderReject, OrderComplete, OrderPrice
+from taximetr.service.car_service import CarService
 from taximetr.service.distributor import distributor
 from taximetr.service.driver_service import DriverService
 from taximetr.service.order_service import OrderService
@@ -45,7 +46,8 @@ async def accept_order(
         order_service: OrderService = Depends(),
         driver_service: DriverService = Depends(),
         settings_service: SettingsService = Depends(),
-        stop_points_service: StopPointsService = Depends()
+        stop_points_service: StopPointsService = Depends(),
+        car_service: CarService = Depends()
 ):
     order = order_service.get_order(order_id)
     factor = settings_service.get_settings(order.settings_id).factor
@@ -53,6 +55,7 @@ async def accept_order(
         raise HTTPException(status_code=404, detail="Order not found")
 
     driver = driver_service.get_driver(data.driver_id)
+    car = car_service.get_car(driver.current_car_id) if driver else None
     if not driver:
         raise HTTPException(status_code=404, detail="Driver not found")
 
@@ -80,6 +83,7 @@ async def accept_order(
             "lng": driver.current_lng,
             "order_id": order.id,
             "status": order.status,
+            "license_plate": car.license_plate if car else None,
             "order": order.model_dump(mode='json'),
             "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
         })
@@ -95,13 +99,15 @@ async def reject_order(
         data: OrderReject,
         order_service: OrderService = Depends(),
         driver_service: DriverService = Depends(),
-        stop_points_service: StopPointsService = Depends()
+        stop_points_service: StopPointsService = Depends(),
+        car_service: CarService = Depends()
 ):
     order = order_service.get_order(order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
     driver = driver_service.get_driver(data.driver_id)
+    car = car_service.get_car(driver.current_car_id) if driver else None
     if not driver:
         raise HTTPException(status_code=404, detail="Driver not found")
 
@@ -119,6 +125,7 @@ async def reject_order(
             "status": order.status,
             "order": order.model_dump(mode='json'),
             "driver_phone": driver.phone,
+            "license_plate": car.license_plate if car else None,
             "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
         }))
 
@@ -136,12 +143,14 @@ async def update_status(
         status: str,
         order_service: OrderService = Depends(),
         driver_service: DriverService = Depends(),
-        stop_points_service: StopPointsService = Depends()
+        stop_points_service: StopPointsService = Depends(),
+        car_service: CarService = Depends()
 ):
     try:
         order = order_service.update_status(order_id, status.lower())
         order = order_service.get_order(order.id)
         driver = driver_service.get_driver(order.driver_id)
+        car = car_service.get_car(driver.current_car_id) if driver else None
         if not order:
             raise HTTPException(status_code=404, detail="Order not found")
 
@@ -153,6 +162,7 @@ async def update_status(
             "status": order.status,
             "order": order.model_dump(mode='json'),
             "driver_phone": driver.phone if driver else  None,
+            "license_plate": car.license_plate if car else None,
             "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
         }))
 
@@ -168,12 +178,14 @@ async def complete_order(
         order_service: OrderService = Depends(),
         driver_service: DriverService = Depends(),
         settings_service: SettingsService = Depends(),
-        stop_points_service: StopPointsService = Depends()
+        stop_points_service: StopPointsService = Depends(),
+        car_service: CarService = Depends()
 ):
     try:
         order = order_service.complete_order(order_id, data.driver_id)
         order = order_service.get_order(order.id)
         driver = driver_service.get_driver(order.driver_id)
+        car = car_service.get_car(driver.current_car_id) if driver else None
         if not order:
             raise HTTPException(status_code=404, detail="Order not found")
 
@@ -189,6 +201,7 @@ async def complete_order(
             "status": order.status,
             "order": order.model_dump(mode='json'),
             "driver_phone": driver.phone,
+            "license_plate": car.license_plate if car else None,
             "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
         }))
 
@@ -210,10 +223,12 @@ async def cancel_order(
         order_service: OrderService = Depends(),
         driver_service: DriverService = Depends(),
         settings_service: SettingsService = Depends(),
-        stop_points_service: StopPointsService = Depends()
+        stop_points_service: StopPointsService = Depends(),
+        car_service: CarService = Depends()
 ):
     order = order_service.get_order(order_id)
     driver = driver_service.get_driver(order.driver_id)
+    car = car_service.get_car(driver.current_car_id) if driver else None
     factor = settings_service.get_settings(order.settings_id).factor
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -239,6 +254,7 @@ async def cancel_order(
             "status": order.status,
             "order": order.model_dump(mode='json'),
             "driver_phone": driver.phone,
+            "license_plate": car.license_plate if car else None,
             "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
         }))
 
@@ -262,10 +278,12 @@ async def set_order_price(
         order_service: OrderService = Depends(),
         settings_service: SettingsService = Depends(),
         driver_service: DriverService = Depends(),
-        stop_points_service: StopPointsService = Depends()
+        stop_points_service: StopPointsService = Depends(),
+        car_service: CarService = Depends()
 ):
     order = order_service.get_order(order_id)
     driver = driver_service.get_driver(order.driver_id)
+    car = car_service.get_car(driver.current_car_id) if driver else None
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
@@ -292,6 +310,7 @@ async def set_order_price(
             "status": order.status,
             "order": order.model_dump(mode='json'),
             "driver_phone": driver.phone,
+            "license_plate": car.license_plate if car else None,
             "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order_id)]
         })
 

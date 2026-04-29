@@ -2,6 +2,8 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 import json
 import sys
 
+from taximetr.service.car_service import CarService
+
 
 def debug_print(*args, **kwargs):
     print(*args, **kwargs, file=sys.stderr, flush=True)
@@ -20,7 +22,8 @@ router = APIRouter(tags=["websocket"])
 @router.websocket("/ws/order/{order_id}")
 async def websocket_order(websocket: WebSocket, order_id: int, order_service: OrderService = Depends(),
                           driver_service: DriverService = Depends(),
-                          stop_points_service: StopPointsService = Depends()):
+                          stop_points_service: StopPointsService = Depends(),
+                          car_service: CarService = Depends()):
     debug_print(f"📡 New WebSocket connection for order {order_id}")
     await websocket.accept()
     debug_print(f"✅ Connection accepted for order {order_id}")
@@ -49,8 +52,10 @@ async def websocket_order(websocket: WebSocket, order_id: int, order_service: Or
         driver = None
         driver_phone = None
         driver_name = None
+        car = None
         if order.driver_id:
             driver = driver_service.get_driver(order.driver_id)
+            car = car_service.get_car(driver.current_car_id) if driver else None
             if driver:
                 driver_phone = driver.phone
                 driver_name = driver.name
@@ -133,6 +138,7 @@ async def websocket_order(websocket: WebSocket, order_id: int, order_service: Or
                         "order": updated_order.model_dump(mode='json'),
                         "driver_phone": driver_phone if driver_phone else None,
                         "driver_name": driver_name if driver_name else None,
+                        "license_plate": car.license_plate if car else None,
                         "stop_points": [sp.model_dump(mode='json') for sp in
                                         stop_points_service.get_stop_points(order_id)]
                     })

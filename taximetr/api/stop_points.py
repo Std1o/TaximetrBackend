@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 
 from taximetr import tables
 from taximetr.model.schemas import DriverResponse, StopPointCreate, StopPoint
+from taximetr.service.car_service import CarService
 from taximetr.service.driver_service import DriverService
 from taximetr.service.order_service import OrderService
 from taximetr.service.stop_points import StopPointsService
@@ -17,10 +18,12 @@ async def create_stop_point(
         stop_point: StopPointCreate,
         service: StopPointsService = Depends(),
         order_service: OrderService = Depends(),
-        driver_service: DriverService = Depends()
+        driver_service: DriverService = Depends(),
+        car_service: CarService = Depends()
 ):
     order = order_service.get_order(stop_point.order_id)
     driver = driver_service.get_driver(order.driver_id)
+    car = car_service.get_car(driver.current_car_id) if driver else None
     service.create(stop_point)
     await manager.send_to_order(stop_point.order_id, {
         "type": "stop_point_created",
@@ -28,6 +31,7 @@ async def create_stop_point(
         "order": order.model_dump(mode='json'),
         "driver_phone": driver.phone if driver else None,
         "driver_name": driver.name if driver else None,
+        "license_plate": car.license_plate if car else None,
         "stop_points": [sp.model_dump(mode='json') for sp in service.get_stop_points(order.id)]
     })
 
@@ -40,10 +44,12 @@ def get_stop_points(order_id: int, service: StopPointsService = Depends()):
 @router.delete("/{stop_point_id}")
 async def delete_stop_point(stop_point_id: int, order_id: int, service: StopPointsService = Depends(),
                             order_service: OrderService = Depends(),
-                            driver_service: DriverService = Depends()
+                            driver_service: DriverService = Depends(),
+                            car_service: CarService = Depends()
                             ):
     order = order_service.get_order(order_id)
     driver = driver_service.get_driver(order.driver_id)
+    car = car_service.get_car(driver.current_car_id) if driver else None
     service.delete_stop_point(stop_point_id)
     await manager.send_to_order(order_id, {
         "type": "stop_point_deleted",
@@ -51,5 +57,6 @@ async def delete_stop_point(stop_point_id: int, order_id: int, service: StopPoin
         "order": order.model_dump(mode='json'),
         "driver_phone": driver.phone if driver else None,
         "driver_name": driver.name if driver else None,
+        "license_plate": car.license_plate if car else None,
         "stop_points": [sp.model_dump(mode='json') for sp in service.get_stop_points(order.id)]
     })
