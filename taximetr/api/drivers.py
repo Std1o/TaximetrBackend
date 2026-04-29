@@ -3,6 +3,7 @@ from typing import List
 
 from taximetr.model.schemas import DriverResponse, DriverCreate, DriverUpdateLocation
 from taximetr.service.auth import get_current_user, AuthService
+from taximetr.service.car_service import CarService
 from taximetr.service.driver_service import DriverService
 from taximetr.service.order_service import OrderService
 from taximetr.service.stop_points import StopPointsService
@@ -42,9 +43,11 @@ async def update_location(
         location: DriverUpdateLocation,
         driver_service: DriverService = Depends(),
         order_service: OrderService = Depends(),
-        stop_points_service: StopPointsService = Depends()
+        stop_points_service: StopPointsService = Depends(),
+        car_service: CarService = Depends()
 ):
     driver = driver_service.update_location(driver_id, location)
+    car = car_service.get_car(driver.current_car_id) if driver else None
     order = order_service.get_order(driver.current_order_id)
     if not driver:
         raise HTTPException(status_code=404, detail="Driver not found")
@@ -64,6 +67,7 @@ async def update_location(
                 "status": order.status,
                 "order": order.model_dump(mode='json'),
                 "driver_phone": driver.phone,
+                "license_plate": car.license_plate if car else None,
                 "stop_points": [sp.model_dump(mode='json') for sp in stop_points_service.get_stop_points(order.id)]
             }
         )
