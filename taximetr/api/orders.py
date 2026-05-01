@@ -30,6 +30,10 @@ async def create_order(
 def get_orders(settings_id: int, service: OrderService = Depends()):
     return service.get_all_orders(settings_id)
 
+@router.get("/month", response_model=List[OrderResponse])
+def get_orders_for_current_month(settings_id: int, service: OrderService = Depends()):
+    return service.get_orders_for_current_month(settings_id)
+
 
 @router.get("/{order_id}", response_model=OrderResponse)
 def get_order(order_id: int, service: OrderService = Depends()):

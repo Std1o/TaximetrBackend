@@ -29,6 +29,23 @@ class OrderService:
     def get_all_orders(self, settings_id: int) -> List[Order]:
         return self.db.query(Order).filter_by(settings_id=settings_id).order_by(Order.created_at.desc()).all()
 
+    def get_orders_for_current_month(self, settings_id: int) -> List[Order]:
+        from datetime import datetime, timedelta
+        now = datetime.now()
+        start_date = datetime(now.year, now.month, 1)
+
+        # Конец текущего месяца
+        if now.month == 12:
+            end_date = datetime(now.year + 1, 1, 1)
+        else:
+            end_date = datetime(now.year, now.month + 1, 1)
+
+        return self.db.query(Order) \
+            .filter_by(settings_id=settings_id) \
+            .filter(Order.created_at >= start_date, Order.created_at < end_date) \
+            .order_by(Order.created_at.asc()) \
+            .all()
+
     def get_table_order(self, order_id: int) -> Optional[Order]:
         return self.db.query(Order).filter(Order.id == order_id).first()
 
