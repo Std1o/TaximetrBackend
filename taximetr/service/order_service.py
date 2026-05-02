@@ -8,7 +8,7 @@ from datetime import datetime
 from taximetr.database import get_session
 from taximetr.model.enums import OrderStatus
 from taximetr.model.schemas import OrderCreate, OrderResponse
-from taximetr.tables import Order
+from taximetr.tables import Order, Driver
 
 
 def debug_print(*args, **kwargs):
@@ -29,22 +29,55 @@ class OrderService:
     def get_all_orders(self, settings_id: int) -> List[Order]:
         return self.db.query(Order).filter_by(settings_id=settings_id).order_by(Order.created_at.desc()).all()
 
-    def get_orders_for_current_month(self, settings_id: int) -> List[Order]:
-        from datetime import datetime, timedelta
+    def get_orders_for_current_month(self, settings_id: int) -> List[dict]:
+        from datetime import datetime
+
         now = datetime.now()
         start_date = datetime(now.year, now.month, 1)
 
-        # Конец текущего месяца
         if now.month == 12:
             end_date = datetime(now.year + 1, 1, 1)
         else:
             end_date = datetime(now.year, now.month + 1, 1)
 
-        return self.db.query(Order) \
-            .filter_by(settings_id=settings_id) \
-            .filter(Order.created_at >= start_date, Order.created_at < end_date) \
-            .order_by(Order.created_at.asc()) \
-            .all()
+        results = self.db.query(
+            Order.id,
+            Order.client_name,
+            Order.client_phone,
+            Order.pickup_address,
+            Order.delivery_address,
+            Order.status,
+            Order.price,
+            Order.created_at,
+            Order.completed_at,
+            Driver.name,
+            Driver.phone
+        ).outerjoin(
+            Driver, Order.driver_id == Driver.id
+        ).filter(
+            Order.settings_id == settings_id,
+            Order.created_at >= start_date,
+            Order.created_at < end_date
+        ).order_by(
+            Order.created_at.asc()
+        ).all()
+
+        return [
+            {
+                "id": row.id,
+                "client_name": row.client_name,
+                "client_phone": row.client_phone,
+                "pickup_address": row.pickup_address,
+                "delivery_address": row.delivery_address,
+                "status": row.status,
+                "price": row.price,
+                "created_at": row.created_at,
+                "completed_at": row.completed_at,
+                "driver_name": row.name,
+                "driver_phone": row.phone
+            }
+            for row in results
+        ]
 
     def get_table_order(self, order_id: int) -> Optional[Order]:
         return self.db.query(Order).filter(Order.id == order_id).first()
