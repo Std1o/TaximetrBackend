@@ -58,7 +58,7 @@ async def update_payment(
     return PaymentResponse(payment=payment)
 
 @router.put("/percent", response_model=PercentResponse)
-async def update_payment(
+async def update_percent(
         settings_id: int,
         percent: int,
         service: SettingsService = Depends()
