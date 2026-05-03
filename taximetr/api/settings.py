@@ -16,7 +16,7 @@ router = APIRouter(prefix="/settings", tags=["settings"])
 
 @router.post("/")
 def add_settings(settings_create: SettingsCreate, service: SettingsService = Depends()):
-    settings = service.add_settings(settings_create.region, settings_create.card)
+    settings = service.add_settings(settings_create)
     return settings
 
 @router.get("/")
