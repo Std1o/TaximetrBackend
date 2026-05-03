@@ -121,6 +121,9 @@ class FactorResponse(BaseModel):
 class PaymentResponse(BaseModel):
     payment: int
 
+class PercentResponse(BaseModel):
+    percent: int
+
 
 class AlgorithmUpdate(BaseModel):
     algorithm: DistributionAlgorithm
@@ -178,6 +181,8 @@ class OrderPrice(BaseModel):
 class SettingsCreate(BaseModel):
     region: str
     card: str
+    locality: str
+    name: str
 
 class Ticket(BaseModel):
     user_id: int

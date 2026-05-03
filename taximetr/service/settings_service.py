@@ -3,6 +3,7 @@ from fastapi import Depends
 
 from taximetr.database import get_session
 from taximetr.model.enums import DistributionAlgorithm
+from taximetr.model.schemas import SettingsCreate
 from taximetr.tables import Settings
 
 
@@ -11,10 +12,12 @@ class SettingsService:
     def __init__(self, session: Session = Depends(get_session)):
         self.session = session
 
-    def add_settings(self, region: str, card: str):
+    def add_settings(self, settings_create: SettingsCreate):
         settings = Settings()
-        settings.region = region
-        settings.card = card
+        settings.region = settings_create.region
+        settings.card = settings_create.card
+        settings.locality = settings_create.locality
+        settings.name = settings_create.name
         self.session.add(settings)
         self.session.commit()
         self.session.refresh(settings)
@@ -50,3 +53,8 @@ class SettingsService:
         settings = self.get_settings(settings_id)
         return DistributionAlgorithm(settings.algorithm)
 
+    def update_percent(self, settings_id: int, percent: int):
+        settings = self.get_settings(settings_id)
+        settings.percent = percent
+        self.session.commit()
+        self.session.refresh(settings)

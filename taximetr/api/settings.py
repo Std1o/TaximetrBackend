@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import asyncio
 
 from taximetr.model.schemas import AlgorithmUpdate, AlgorithmResponse, FactorResponse, DriverResponse, CarResponse, \
-    PaymentResponse, SettingsCreate
+    PaymentResponse, SettingsCreate, PercentResponse
 from taximetr.service.auth import get_current_user
 from taximetr.service.car_service import CarService
 from taximetr.service.driver_service import DriverService
@@ -56,6 +56,15 @@ async def update_payment(
 ):
     service.update_payment(settings_id, payment)
     return PaymentResponse(payment=payment)
+
+@router.put("/percent", response_model=PercentResponse)
+async def update_payment(
+        settings_id: int,
+        percent: int,
+        service: SettingsService = Depends()
+):
+    service.update_percent(settings_id, percent)
+    return PercentResponse(percent=percent)
 
 @router.get("/pending", response_model=List[DriverResponse])
 def get_pending_drivers(

@@ -18,6 +18,9 @@ class Settings(Base):
     region = sa.Column(sa.String, nullable=False)
     payment = sa.Column(sa.Integer, default=200)
     card = sa.Column(sa.String, nullable=False)
+    percent = sa.Column(sa.Integer, default=20)
+    locality = sa.Column(sa.String, nullable=False)
+    name = sa.Column(sa.String, nullable=False)
 
 class User(Base):
     __tablename__ = 'users'
