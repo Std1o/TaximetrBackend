@@ -10,7 +10,7 @@ class Ticket(BaseModel):
     image_url: str
     debt: float
     hours: int
-    settings_id: Optional[int]
+    settings_id: Optional[int] = None
 
     class Config:
         from_attributes = True
