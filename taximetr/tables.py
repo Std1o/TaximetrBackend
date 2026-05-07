@@ -21,6 +21,11 @@ class Settings(Base):
     percent = sa.Column(sa.Integer, default=20)
     locality = sa.Column(sa.String, nullable=False)
     name = sa.Column(sa.String, nullable=False)
+    price_1_hour = sa.Column(sa.Integer, default=50)
+    price_2_hours = sa.Column(sa.Integer, default=100)
+    price_8_hours = sa.Column(sa.Integer, default=300)
+    price_24_hours = sa.Column(sa.Integer, default=800)
+    price_1_month = sa.Column(sa.Integer, default=5000)
 
 class User(Base):
     __tablename__ = 'users'
@@ -119,6 +124,7 @@ class DriversTickets(Base):
     phone = sa.Column(sa.Text)
     image_url = sa.Column(sa.String)
     debt = sa.Column(sa.Double)
+    hours = sa.Column(sa.Integer)
 
 class Tickets(Base):
     __tablename__ = 'tickets'

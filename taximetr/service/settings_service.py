@@ -58,3 +58,53 @@ class SettingsService:
         settings.percent = percent
         self.session.commit()
         self.session.refresh(settings)
+
+    def update_price_1_hour(self, settings_id: int, price: int):
+        settings = self.get_settings(settings_id)
+        settings.price_1_hour = price
+        self.session.commit()
+        self.session.refresh(settings)
+
+    def update_price_2_hours(self, settings_id: int, price: int):
+        settings = self.get_settings(settings_id)
+        settings.price_2_hours = price
+        self.session.commit()
+        self.session.refresh(settings)
+
+    def update_price_8_hours(self, settings_id: int, price: int):
+        settings = self.get_settings(settings_id)
+        settings.price_8_hours = price
+        self.session.commit()
+        self.session.refresh(settings)
+
+    def update_price_24_hours(self, settings_id: int, price: int):
+        settings = self.get_settings(settings_id)
+        settings.price_24_hours = price
+        self.session.commit()
+        self.session.refresh(settings)
+
+    def update_price_1_month(self, settings_id: int, price: int):
+        settings = self.get_settings(settings_id)
+        settings.price_1_month = price
+        self.session.commit()
+        self.session.refresh(settings)
+
+    def get_price_1_hour(self, settings_id: int) -> int:
+        settings = self.get_settings(settings_id)
+        return settings.price_1_hour
+
+    def get_price_2_hours(self, settings_id: int) -> int:
+        settings = self.get_settings(settings_id)
+        return settings.price_2_hours
+
+    def get_price_8_hours(self, settings_id: int) -> int:
+        settings = self.get_settings(settings_id)
+        return settings.price_8_hours
+
+    def get_price_24_hours(self, settings_id: int) -> int:
+        settings = self.get_settings(settings_id)
+        return settings.price_24_hours
+
+    def get_price_1_month(self, settings_id: int) -> int:
+        settings = self.get_settings(settings_id)
+        return settings.price_1_month

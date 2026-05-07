@@ -27,12 +27,29 @@ class TicketService:
         return self.session.execute(statement).scalars().all()
 
     async def create_ticket(self, ticket: Ticket) -> Ticket:
+        # Получить настройки
+        settings = self.session.get(tables.Settings, ticket.settings_id)
+
+        # Определить цену по часам
+        prices = {
+            1: settings.price_1_hour,
+            2: settings.price_2_hours,
+            8: settings.price_8_hours,
+            24: settings.price_24_hours,
+            720: settings.price_1_month
+        }
+
+        price = prices.get(ticket.hours)
+        if price:
+            ticket.debt = price  # Устанавливаем сумму к оплате
+
         new_ticket = tables.DriversTickets(
             user_id=ticket.user_id,
             username=ticket.username,
             phone=ticket.phone,
             image_url=ticket.image_url,
-            debt = ticket.debt
+            debt=ticket.debt,
+            hours=ticket.hours  # нужно добавить поле hours в DriversTickets
         )
         self.session.add(new_ticket)
         self.session.commit()
@@ -49,11 +66,12 @@ class TicketService:
 
     async def give_premium(self, phone: str):
         user = await self.get_user_by_phone(phone)
-        user.premium = datetime.now() + timedelta(days=1)
-        debug_print(f"now: {datetime.now()}")
-        debug_print(f"result: {datetime.now() + timedelta(days=1)}")
-        self.session.commit()
         ticket = await self.get_ticket_by_phone(phone)
+
+        # Активируем premium на купленное количество часов
+        user.premium = datetime.now() + timedelta(hours=ticket.hours)
+
+        self.session.commit()
         self.session.delete(ticket)
         self.session.commit()
         return await self.get_tickets()

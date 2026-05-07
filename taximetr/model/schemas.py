@@ -205,3 +205,18 @@ class StopPoint(BaseModel):
 
     class Config:
         from_attributes = True
+
+class Price1HourResponse(BaseModel):
+    price_1_hour: int
+
+class Price2HoursResponse(BaseModel):
+    price_2_hours: int
+
+class Price8HoursResponse(BaseModel):
+    price_8_hours: int
+
+class Price24HoursResponse(BaseModel):
+    price_24_hours: int
+
+class Price1MonthResponse(BaseModel):
+    price_1_month: int

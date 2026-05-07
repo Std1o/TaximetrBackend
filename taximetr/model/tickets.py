@@ -7,6 +7,7 @@ class Ticket(BaseModel):
     phone: str
     image_url: str
     debt: float
+    hours: int
 
     class Config:
         from_attributes = True
