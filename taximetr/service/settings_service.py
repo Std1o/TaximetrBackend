@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 
 from taximetr.database import get_session
 from taximetr.model.enums import DistributionAlgorithm
@@ -59,52 +59,21 @@ class SettingsService:
         self.session.commit()
         self.session.refresh(settings)
 
-    def update_price_1_hour(self, settings_id: int, price: int):
+    def update_shift_price(self, settings_id: int, hours: int, price: int):
         settings = self.get_settings(settings_id)
-        settings.price_1_hour = price
+
+        if hours == 1:
+            settings.price_1_hour = price
+        elif hours == 2:
+            settings.price_2_hours = price
+        elif hours == 8:
+            settings.price_8_hours = price
+        elif hours == 24:
+            settings.price_24_hours = price
+        elif hours == 720:  # 30 дней * 24 часа
+            settings.price_1_month = price
+        else:
+            raise HTTPException(status_code=400, detail="Invalid hours. Allowed: 1, 2, 8, 24, 720")
+
         self.session.commit()
         self.session.refresh(settings)
-
-    def update_price_2_hours(self, settings_id: int, price: int):
-        settings = self.get_settings(settings_id)
-        settings.price_2_hours = price
-        self.session.commit()
-        self.session.refresh(settings)
-
-    def update_price_8_hours(self, settings_id: int, price: int):
-        settings = self.get_settings(settings_id)
-        settings.price_8_hours = price
-        self.session.commit()
-        self.session.refresh(settings)
-
-    def update_price_24_hours(self, settings_id: int, price: int):
-        settings = self.get_settings(settings_id)
-        settings.price_24_hours = price
-        self.session.commit()
-        self.session.refresh(settings)
-
-    def update_price_1_month(self, settings_id: int, price: int):
-        settings = self.get_settings(settings_id)
-        settings.price_1_month = price
-        self.session.commit()
-        self.session.refresh(settings)
-
-    def get_price_1_hour(self, settings_id: int) -> int:
-        settings = self.get_settings(settings_id)
-        return settings.price_1_hour
-
-    def get_price_2_hours(self, settings_id: int) -> int:
-        settings = self.get_settings(settings_id)
-        return settings.price_2_hours
-
-    def get_price_8_hours(self, settings_id: int) -> int:
-        settings = self.get_settings(settings_id)
-        return settings.price_8_hours
-
-    def get_price_24_hours(self, settings_id: int) -> int:
-        settings = self.get_settings(settings_id)
-        return settings.price_24_hours
-
-    def get_price_1_month(self, settings_id: int) -> int:
-        settings = self.get_settings(settings_id)
-        return settings.price_1_month

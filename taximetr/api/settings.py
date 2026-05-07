@@ -4,8 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import asyncio
 
 from taximetr.model.schemas import AlgorithmUpdate, AlgorithmResponse, FactorResponse, DriverResponse, CarResponse, \
-    PaymentResponse, SettingsCreate, PercentResponse, Price1HourResponse, Price2HoursResponse, Price8HoursResponse, \
-    Price24HoursResponse, Price1MonthResponse
+    PaymentResponse, SettingsCreate, PercentResponse, ShiftPriceUpdate
 from taximetr.service.auth import get_current_user
 from taximetr.service.car_service import CarService
 from taximetr.service.driver_service import DriverService
@@ -102,47 +101,12 @@ def approve_car(
     service.approve_car(car_id, approved)
     return {"message": f"Car approved: {approved}", "car_id": car_id}
 
-@router.put("/price_1_hour", response_model=Price1HourResponse)
-async def update_price_1_hour(
+@router.put("/shift_price")
+async def update_shift_price(
         settings_id: int,
-        price: int,
+        data: ShiftPriceUpdate,
         service: SettingsService = Depends()
 ):
-    service.update_price_1_hour(settings_id, price)
-    return Price1HourResponse(price_1_hour=price)
-
-@router.put("/price_2_hours", response_model=Price2HoursResponse)
-async def update_price_2_hours(
-        settings_id: int,
-        price: int,
-        service: SettingsService = Depends()
-):
-    service.update_price_2_hours(settings_id, price)
-    return Price2HoursResponse(price_2_hours=price)
-
-@router.put("/price_8_hours", response_model=Price8HoursResponse)
-async def update_price_8_hours(
-        settings_id: int,
-        price: int,
-        service: SettingsService = Depends()
-):
-    service.update_price_8_hours(settings_id, price)
-    return Price8HoursResponse(price_8_hours=price)
-
-@router.put("/price_24_hours", response_model=Price24HoursResponse)
-async def update_price_24_hours(
-        settings_id: int,
-        price: int,
-        service: SettingsService = Depends()
-):
-    service.update_price_24_hours(settings_id, price)
-    return Price24HoursResponse(price_24_hours=price)
-
-@router.put("/price_1_month", response_model=Price1MonthResponse)
-async def update_price_1_month(
-        settings_id: int,
-        price: int,
-        service: SettingsService = Depends()
-):
-    service.update_price_1_month(settings_id, price)
-    return Price1MonthResponse(price_1_month=price)
+    """Установить стоимость для определенного количества часов (1,2,8,24,720)"""
+    service.update_shift_price(settings_id, data.hours, data.price)
+    return {"message": f"Price for {data.hours} hours set to {data.price}", "hours": data.hours, "price": data.price}
