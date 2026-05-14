@@ -26,6 +26,7 @@ class Settings(Base):
     price_8_hours = sa.Column(sa.Integer, default=300)
     price_24_hours = sa.Column(sa.Integer, default=800)
     price_1_month = sa.Column(sa.Integer, default=5000)
+    user_agreement = sa.Column(sa.Text, default="")
 
 class User(Base):
     __tablename__ = 'users'
@@ -147,3 +148,9 @@ class StopPoints(Base):
     order_id = sa.Column(sa.Integer, sa.ForeignKey(Order.id))
     address = sa.Column(sa.Text)
     was_stopped = sa.Column(sa.Boolean, default=False)
+
+
+class UserAgreement(Base):
+    __tablename__ = 'user_agreement'
+    id = sa.Column(sa.Integer, primary_key=True)
+    file_url = sa.Column(sa.Text)

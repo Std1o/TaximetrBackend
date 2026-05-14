@@ -4,6 +4,8 @@ WORKDIR /code
 
 RUN mkdir -p /code/taximetr/images
 
+RUN mkdir -p /code/taximetr/files
+
 COPY ./requirements.txt /code/
 
 RUN pip install -r requirements.txt

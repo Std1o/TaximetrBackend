@@ -77,3 +77,9 @@ class SettingsService:
 
         self.session.commit()
         self.session.refresh(settings)
+
+    def update_user_agreement(self, settings_id: int, file_url: str):
+        settings = self.get_settings(settings_id)
+        settings.user_agreement = file_url
+        self.session.commit()
+        self.session.refresh(settings)

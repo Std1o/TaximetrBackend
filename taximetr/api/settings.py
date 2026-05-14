@@ -110,3 +110,12 @@ async def update_shift_price(
     """Установить стоимость для определенного количества часов (1,2,8,24,720)"""
     service.update_shift_price(settings_id, data.hours, data.price)
     return {"message": f"Price for {data.hours} hours set to {data.price}", "hours": data.hours, "price": data.price}
+
+@router.put("/user_agreement")
+async def update_user_agreement(
+        settings_id: int,
+        file_url: str,
+        service: SettingsService = Depends()
+):
+    service.update_user_agreement(settings_id, file_url)
+    return {"message": "success"}
