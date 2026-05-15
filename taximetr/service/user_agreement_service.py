@@ -8,7 +8,7 @@ class UserAgreementService:
     def __init__(self, session: Session = Depends(get_session)):
         self.session = session
 
-    def get_user_agreement(self) -> tables.UserAgreement:
+    def get_user_agreement(self) -> str:
         user_agreement: tables.UserAgreement = self.session.query(tables.UserAgreement).first()
         return user_agreement.file_url
 
