@@ -9,12 +9,16 @@ class UserAgreementService:
     def __init__(self, session: Session = Depends(get_session)):
         self.session = session
 
+    def _get_user_agreement(self) -> tables.UserAgreement:
+        user_agreement: tables.UserAgreement = self.session.query(tables.UserAgreement).first()
+        return user_agreement
+
     def get_user_agreement(self) -> PlainTextResponse:
         user_agreement: tables.UserAgreement = self.session.query(tables.UserAgreement).first()
         return PlainTextResponse(user_agreement.file_url)
 
     def create_user_agreement(self, file_url: str) -> tables.UserAgreement:
-        user_agreement = self.get_user_agreement()
+        user_agreement = self._get_user_agreement()
         if user_agreement:
             user_agreement.file_url = file_url
         if not user_agreement:
