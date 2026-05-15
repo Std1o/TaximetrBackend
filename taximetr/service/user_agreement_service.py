@@ -1,4 +1,5 @@
 from fastapi import Depends
+from starlette.responses import PlainTextResponse
 
 from taximetr import tables
 from taximetr.database import Session, get_session
@@ -8,9 +9,9 @@ class UserAgreementService:
     def __init__(self, session: Session = Depends(get_session)):
         self.session = session
 
-    def get_user_agreement(self) -> str:
+    def get_user_agreement(self) -> PlainTextResponse:
         user_agreement: tables.UserAgreement = self.session.query(tables.UserAgreement).first()
-        return user_agreement.file_url
+        return PlainTextResponse(user_agreement.file_url)
 
     def create_user_agreement(self, file_url: str) -> tables.UserAgreement:
         user_agreement = self.get_user_agreement()
