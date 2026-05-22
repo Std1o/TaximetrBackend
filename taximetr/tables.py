@@ -26,7 +26,8 @@ class Settings(Base):
     price_8_hours = sa.Column(sa.Integer, default=300)
     price_24_hours = sa.Column(sa.Integer, default=800)
     price_1_month = sa.Column(sa.Integer, default=5000)
-    user_agreement = sa.Column(sa.Text, default="")
+    user_agreement_drivers = sa.Column(sa.Text, default="")
+    user_agreement_users = sa.Column(sa.Text, default="")
 
 class User(Base):
     __tablename__ = 'users'

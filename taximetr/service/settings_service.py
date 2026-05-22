@@ -78,8 +78,14 @@ class SettingsService:
         self.session.commit()
         self.session.refresh(settings)
 
-    def update_user_agreement(self, settings_id: int, file_url: str):
+    def update_user_agreement_drivers(self, settings_id: int, file_url: str):
         settings = self.get_settings(settings_id)
-        settings.user_agreement = file_url
+        settings.user_agreement_drivers = file_url
+        self.session.commit()
+        self.session.refresh(settings)
+
+    def update_user_agreement_users(self, settings_id: int, file_url: str):
+        settings = self.get_settings(settings_id)
+        settings.user_agreement_users = file_url
         self.session.commit()
         self.session.refresh(settings)
