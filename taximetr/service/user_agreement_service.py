@@ -15,6 +15,8 @@ class UserAgreementService:
 
     def get_user_agreement(self) -> PlainTextResponse:
         user_agreement: tables.UserAgreement = self.session.query(tables.UserAgreement).first()
+        if not user_agreement:
+            return PlainTextResponse("")
         return PlainTextResponse(user_agreement.file_url)
 
     def create_user_agreement(self, file_url: str) -> tables.UserAgreement:
